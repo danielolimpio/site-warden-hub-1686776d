@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { Plus, Search, X } from "lucide-react";
+import { Plus, Search, X, LogOut, Lock } from "lucide-react";
 import { Toaster } from "@/components/ui/sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,6 +9,7 @@ import { useLocalStorage } from "@/lib/use-storage";
 import { SiteCard } from "@/components/dashboard/SiteCard";
 import { SiteForm } from "@/components/dashboard/SiteForm";
 import { PromptManager } from "@/components/dashboard/PromptManager";
+import { useAuth } from "@/lib/auth";
 import logoSrc from "@/assets/logo.avif";
 
 export const Route = createFileRoute("/")({
@@ -22,6 +23,13 @@ export const Route = createFileRoute("/")({
 });
 
 function Dashboard() {
+  const { authed, ready, login, logout } = useAuth();
+  if (!ready) return null;
+  if (!authed) return <LoginScreen onLogin={login} />;
+  return <DashboardInner logout={logout} />;
+}
+
+function DashboardInner({ logout }: { logout: () => void }) {
   const [sites, setSites] = useLocalStorage<SiteRecord[]>("sites.v1", SEED_SITES);
   const [query, setQuery] = useState("");
   const [open, setOpen] = useState(false);
@@ -121,6 +129,9 @@ function Dashboard() {
             <Button onClick={() => { setEditing(null); setOpen(true); }}>
               <Plus className="h-4 w-4 mr-1.5" />Novo site
             </Button>
+            <Button variant="outline" size="sm" onClick={logout} title="Sair">
+              <LogOut className="h-4 w-4" />
+            </Button>
           </div>
         </div>
       </header>
@@ -156,6 +167,57 @@ function Dashboard() {
       </main>
 
       <SiteForm open={open} onOpenChange={setOpen} initial={editing} onSave={save} />
+    </div>
+  );
+}
+
+function LoginScreen({ onLogin }: { onLogin: (e: string, p: string) => boolean }) {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+
+  const submit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!onLogin(email, password)) setError("E-mail ou senha incorretos.");
+  };
+
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-background px-4">
+      <Toaster richColors position="bottom-right" />
+      <form
+        onSubmit={submit}
+        className="w-full max-w-sm rounded-2xl border border-border bg-card p-8 shadow-[var(--shadow-hover)]"
+      >
+        <div className="flex items-center gap-3 mb-6">
+          <img src={logoSrc} alt="Logo" className="h-10 w-10 rounded-xl object-contain" />
+          <div>
+            <h1 className="font-semibold leading-none">Painel de Sites</h1>
+            <p className="text-xs text-muted-foreground mt-1">Acesso restrito</p>
+          </div>
+        </div>
+        <label className="block text-xs font-medium text-muted-foreground mb-1.5">E-mail</label>
+        <Input
+          type="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          autoComplete="email"
+          required
+          className="mb-3"
+        />
+        <label className="block text-xs font-medium text-muted-foreground mb-1.5">Senha</label>
+        <Input
+          type="password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          autoComplete="current-password"
+          required
+          className="mb-4"
+        />
+        {error && <p className="text-xs text-destructive mb-3">{error}</p>}
+        <Button type="submit" className="w-full">
+          <Lock className="h-4 w-4 mr-1.5" />Entrar
+        </Button>
+      </form>
     </div>
   );
 }
