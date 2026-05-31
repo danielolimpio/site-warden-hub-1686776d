@@ -14,8 +14,8 @@ type Store = Record<PromptCategory, Block[]>;
 
 const initialStore: Store = { PWA: [], FTP_HOST: [], ARTIGO: [], SCROLL: [] };
 
-export function PromptManager() {
-  const [store, setStore] = useLocalStorage<Store>("prompts.v1", initialStore);
+export function PromptManager({ siteId, siteDomain }: { siteId: string; siteDomain: string }) {
+  const [store, setStore] = useLocalStorage<Store>(`prompts.v2.${siteId}`, initialStore);
   const [active, setActive] = useState<PromptCategory>("PWA");
 
   const blocks = store[active] ?? [];
@@ -59,7 +59,9 @@ export function PromptManager() {
         <div className="flex items-center justify-between mb-4">
           <div>
             <h2 className="text-xl font-semibold">{active}</h2>
-            <p className="text-sm text-muted-foreground">Snippets prontos para copiar e colar.</p>
+            <p className="text-sm text-muted-foreground">
+              Snippets de <span className="font-medium text-foreground">{siteDomain}</span> · prontos para copiar e colar.
+            </p>
           </div>
           <Button onClick={addBlock} size="sm"><Plus className="h-4 w-4 mr-1.5" />Novo bloco</Button>
         </div>
