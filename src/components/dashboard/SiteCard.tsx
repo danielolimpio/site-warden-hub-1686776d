@@ -95,7 +95,7 @@ export function SiteCard({ site, onEdit, onDelete, onToggle }: Props) {
 
         <div className="grid grid-cols-6 gap-1.5 mb-4">
           {METRICS.map((m) => {
-            const val = (site as Record<string, unknown>)[m.key as string];
+            const val = (site as unknown as Record<string, unknown>)[m.key as string];
             return (
               <Tooltip key={m.key as string}>
                 <TooltipTrigger asChild>
