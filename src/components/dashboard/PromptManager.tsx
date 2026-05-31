@@ -7,7 +7,9 @@ import { toast } from "sonner";
 import { useLocalStorage } from "@/lib/use-storage";
 
 export type PromptCategory = "PWA" | "FTP_HOST" | "ARTIGO" | "SCROLL";
-const CATS: PromptCategory[] = ["PWA", "FTP_HOST", "ARTIGO", "SCROLL"];
+const CATS: PromptCategory[] = ["PWA", "SCROLL", "FTP_HOST", "ARTIGO"];
+const GLOBAL_CATS: PromptCategory[] = ["PWA", "SCROLL"];
+const isGlobal = (c: PromptCategory) => GLOBAL_CATS.includes(c);
 
 interface Block { id: string; title: string; code: string }
 type Store = Record<PromptCategory, Block[]>;
@@ -15,10 +17,17 @@ type Store = Record<PromptCategory, Block[]>;
 const initialStore: Store = { PWA: [], FTP_HOST: [], ARTIGO: [], SCROLL: [] };
 
 export function PromptManager({ siteId, siteDomain }: { siteId: string; siteDomain: string }) {
-  const [store, setStore] = useLocalStorage<Store>(`prompts.v2.${siteId}`, initialStore);
+  const [siteStore, setSiteStore] = useLocalStorage<Store>(`prompts.v2.${siteId}`, initialStore);
+  const [globalStore, setGlobalStore] = useLocalStorage<Store>(`prompts.v2.__global__`, initialStore);
   const [active, setActive] = useState<PromptCategory>("PWA");
 
+  const activeIsGlobal = isGlobal(active);
+  const store = activeIsGlobal ? globalStore : siteStore;
+  const setStore = activeIsGlobal ? setGlobalStore : setSiteStore;
   const blocks = store[active] ?? [];
+
+  const countOf = (c: PromptCategory) =>
+    (isGlobal(c) ? globalStore[c]?.length : siteStore[c]?.length) ?? 0;
 
   const addBlock = () => {
     const nb: Block = { id: crypto.randomUUID(), title: "Novo bloco", code: "" };
@@ -36,30 +45,28 @@ export function PromptManager({ siteId, siteDomain }: { siteId: string; siteDoma
   return (
     <div className="flex flex-col gap-4">
       <nav className="space-y-1">
-        <p className="text-xs uppercase tracking-wider text-muted-foreground mb-2 px-2">Categorias</p>
-        {CATS.map((c) => (
-          <button
-            key={c}
-            onClick={() => setActive(c)}
-            className={`w-full text-left px-3 py-2 rounded-lg text-sm font-medium transition flex items-center justify-between ${
-              active === c
-                ? "bg-primary text-primary-foreground shadow-[var(--shadow-card)]"
-                : "hover:bg-secondary text-foreground"
-            }`}
-          >
-            <span>{c}</span>
-            <span className={`text-xs ${active === c ? "opacity-80" : "text-muted-foreground"}`}>
-              {(store[c]?.length ?? 0)}
-            </span>
-          </button>
+        <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1 px-2">Genéricos (todos os sites)</p>
+        {GLOBAL_CATS.map((c) => (
+          <CategoryButton key={c} cat={c} active={active === c} count={countOf(c)} global onClick={() => setActive(c)} />
+        ))}
+        <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1 px-2 pt-3">Exclusivos deste site</p>
+        {CATS.filter((c) => !isGlobal(c)).map((c) => (
+          <CategoryButton key={c} cat={c} active={active === c} count={countOf(c)} onClick={() => setActive(c)} />
         ))}
       </nav>
 
       <section className="border-t border-border pt-4">
         <div className="flex items-center justify-between mb-3 gap-2">
           <div className="min-w-0">
-            <h2 className="text-base font-semibold leading-tight">{active}</h2>
-            <p className="text-[11px] text-muted-foreground truncate">Snippets de {siteDomain}</p>
+            <h2 className="text-base font-semibold leading-tight flex items-center gap-2">
+              {active}
+              <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded ${activeIsGlobal ? "bg-[oklch(0.92_0.08_150)] text-[oklch(0.35_0.12_150)]" : "bg-secondary text-muted-foreground"}`}>
+                {activeIsGlobal ? "Genérico" : "Exclusivo"}
+              </span>
+            </h2>
+            <p className="text-[11px] text-muted-foreground truncate">
+              {activeIsGlobal ? "Snippets compartilhados entre todos os sites" : `Snippets exclusivos de ${siteDomain}`}
+            </p>
           </div>
           <Button onClick={addBlock} size="sm" className="shrink-0 h-8 px-2"><Plus className="h-4 w-4 mr-1" />Novo</Button>
         </div>
@@ -77,6 +84,29 @@ export function PromptManager({ siteId, siteDomain }: { siteId: string; siteDoma
         )}
       </section>
     </div>
+  );
+}
+
+function CategoryButton({ cat, active, count, global: isGlobalCat, onClick }: { cat: PromptCategory; active: boolean; count: number; global?: boolean; onClick: () => void }) {
+  return (
+          <button
+            onClick={onClick}
+            className={`w-full text-left px-3 py-2 rounded-lg text-sm font-medium transition flex items-center justify-between ${
+              active
+                ? "bg-primary text-primary-foreground shadow-[var(--shadow-card)]"
+                : "hover:bg-secondary text-foreground"
+            }`}
+          >
+            <span className="flex items-center gap-2">
+              {cat}
+              {isGlobalCat && (
+                <span className={`text-[9px] uppercase tracking-wider px-1 py-0.5 rounded ${active ? "bg-primary-foreground/20" : "bg-[oklch(0.92_0.08_150)] text-[oklch(0.35_0.12_150)]"}`}>
+                  global
+                </span>
+              )}
+            </span>
+            <span className={`text-xs ${active ? "opacity-80" : "text-muted-foreground"}`}>{count}</span>
+          </button>
   );
 }
 
