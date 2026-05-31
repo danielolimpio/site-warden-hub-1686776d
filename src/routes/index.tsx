@@ -72,7 +72,7 @@ function Dashboard() {
   };
 
   return (
-    <div className={`min-h-screen bg-background transition-[padding] ${selected ? "lg:pl-[240px]" : ""}`}>
+    <div className={`min-h-screen bg-background transition-[padding] ${selected ? "lg:pl-[400px]" : ""}`}>
       <Toaster richColors position="bottom-right" />
 
       {selected && (
