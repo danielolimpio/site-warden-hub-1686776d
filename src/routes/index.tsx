@@ -72,11 +72,11 @@ function Dashboard() {
   };
 
   return (
-    <div className={`min-h-screen bg-background transition-[padding] ${selected ? "lg:pl-[520px]" : ""}`}>
+    <div className={`min-h-screen bg-background transition-[padding] ${selected ? "lg:pl-[240px]" : ""}`}>
       <Toaster richColors position="bottom-right" />
 
       {selected && (
-        <aside className="fixed inset-y-0 left-0 z-40 w-full lg:w-[520px] bg-card border-r border-border shadow-[var(--shadow-hover)] flex flex-col">
+        <aside className="fixed inset-y-0 left-0 z-40 w-[240px] bg-card border-r border-border shadow-[var(--shadow-hover)] flex flex-col">
           <div className="flex items-center justify-between gap-2 px-5 py-4 border-b border-border bg-secondary/40">
             <div className="min-w-0">
               <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">Prompts do site</p>
@@ -86,7 +86,7 @@ function Dashboard() {
               <X className="h-4 w-4 mr-1.5" />Fechar
             </Button>
           </div>
-          <div className="flex-1 overflow-y-auto p-5">
+          <div className="flex-1 overflow-y-auto p-3">
             <PromptManager siteId={selected.id} siteDomain={selected.domain} />
           </div>
         </aside>

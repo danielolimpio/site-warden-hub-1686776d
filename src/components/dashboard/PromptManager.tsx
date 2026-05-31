@@ -34,8 +34,8 @@ export function PromptManager({ siteId, siteDomain }: { siteId: string; siteDoma
   };
 
   return (
-    <div className="grid grid-cols-[200px_1fr] gap-6">
-      <aside className="space-y-1">
+    <div className="flex flex-col gap-4">
+      <nav className="space-y-1">
         <p className="text-xs uppercase tracking-wider text-muted-foreground mb-2 px-2">Categorias</p>
         {CATS.map((c) => (
           <button
@@ -53,25 +53,23 @@ export function PromptManager({ siteId, siteDomain }: { siteId: string; siteDoma
             </span>
           </button>
         ))}
-      </aside>
+      </nav>
 
-      <section>
-        <div className="flex items-center justify-between mb-4">
-          <div>
-            <h2 className="text-xl font-semibold">{active}</h2>
-            <p className="text-sm text-muted-foreground">
-              Snippets de <span className="font-medium text-foreground">{siteDomain}</span> · prontos para copiar e colar.
-            </p>
+      <section className="border-t border-border pt-4">
+        <div className="flex items-center justify-between mb-3 gap-2">
+          <div className="min-w-0">
+            <h2 className="text-base font-semibold leading-tight">{active}</h2>
+            <p className="text-[11px] text-muted-foreground truncate">Snippets de {siteDomain}</p>
           </div>
-          <Button onClick={addBlock} size="sm"><Plus className="h-4 w-4 mr-1.5" />Novo bloco</Button>
+          <Button onClick={addBlock} size="sm" className="shrink-0 h-8 px-2"><Plus className="h-4 w-4 mr-1" />Novo</Button>
         </div>
 
         {blocks.length === 0 ? (
-          <div className="rounded-xl border border-dashed border-border bg-card/40 p-12 text-center text-muted-foreground">
-            Nenhum bloco em <strong>{active}</strong>. Clique em <em>Novo bloco</em> para começar.
+          <div className="rounded-lg border border-dashed border-border bg-card/40 p-6 text-center text-xs text-muted-foreground">
+            Nenhum bloco em <strong>{active}</strong>. Clique em <em>Novo</em> para começar.
           </div>
         ) : (
-          <div className="space-y-4">
+          <div className="space-y-3">
             {blocks.map((b) => (
               <BlockEditor key={b.id} block={b} onChange={(p) => updateBlock(b.id, p)} onRemove={() => removeBlock(b.id)} />
             ))}
