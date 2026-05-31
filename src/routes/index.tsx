@@ -9,6 +9,7 @@ import { useLocalStorage } from "@/lib/use-storage";
 import { SiteCard } from "@/components/dashboard/SiteCard";
 import { SiteForm } from "@/components/dashboard/SiteForm";
 import { PromptManager } from "@/components/dashboard/PromptManager";
+import logoSrc from "@/assets/logo.avif";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -97,9 +98,11 @@ function Dashboard() {
       <header className="sticky top-0 z-30 backdrop-blur bg-background/85 border-b border-border">
         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center gap-4">
           <div className="flex items-center gap-2.5">
-            <div className="h-9 w-9 rounded-xl bg-primary text-primary-foreground grid place-items-center font-bold">
-              SD
-            </div>
+            <img
+              src={logoSrc}
+              alt="Logo"
+              className="h-9 w-9 rounded-xl object-contain"
+            />
             <div>
               <h1 className="font-semibold leading-none">Painel de Sites</h1>
               <p className="text-xs text-muted-foreground mt-1">Uso interno · organização diária</p>
