@@ -1,10 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { Plus, Search, LayoutDashboard, Code2 } from "lucide-react";
+import { Plus, Search, X } from "lucide-react";
 import { Toaster } from "@/components/ui/sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { SEED_SITES, type ChecklistKey, type SiteRecord } from "@/lib/sites-seed";
 import { useLocalStorage } from "@/lib/use-storage";
 import { SiteCard } from "@/components/dashboard/SiteCard";
@@ -26,17 +25,24 @@ function Dashboard() {
   const [query, setQuery] = useState("");
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<SiteRecord | null>(null);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
-    if (!q) return sites;
-    return sites.filter(
+    const sorted = [...sites].sort((a, b) => a.domain.localeCompare(b.domain, "pt-BR"));
+    if (!q) return sorted;
+    return sorted.filter(
       (s) =>
         s.domain.toLowerCase().includes(q) ||
         s.emails.some((e) => e.toLowerCase().includes(q)) ||
         (s.notes ?? "").toLowerCase().includes(q),
     );
   }, [sites, query]);
+
+  const selected = useMemo(
+    () => sites.find((s) => s.id === selectedId) ?? null,
+    [sites, selectedId],
+  );
 
   const stats = useMemo(() => {
     const total = sites.length;
@@ -108,8 +114,7 @@ function Dashboard() {
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="sites" className="space-y-6">
-            <section className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <section className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
               <Stat label="Total de sites" value={stats.total} />
               <Stat label="SEO 100%" value={stats.seoDone} accent />
               <Stat label="GSC configurado" value={stats.gscDone} />
@@ -126,6 +131,8 @@ function Dashboard() {
                   <SiteCard
                     key={s.id}
                     site={s}
+                    selected={s.id === selectedId}
+                    onSelect={() => setSelectedId((cur) => (cur === s.id ? null : s.id))}
                     onEdit={() => { setEditing(s); setOpen(true); }}
                     onDelete={() => remove(s.id)}
                     onToggle={(k, v) => toggle(s.id, k, v)}
@@ -133,12 +140,21 @@ function Dashboard() {
                 ))}
               </section>
             )}
-          </TabsContent>
 
-          <TabsContent value="prompts">
-            <PromptManager />
-          </TabsContent>
-        </Tabs>
+        {selected && (
+          <section className="mt-10 rounded-2xl border border-border bg-card/40 p-6 shadow-[var(--shadow-card)]">
+            <div className="flex items-center justify-between mb-5">
+              <div>
+                <p className="text-xs uppercase tracking-wider text-muted-foreground font-medium">Prompts do site</p>
+                <h2 className="text-lg font-semibold mt-1">{selected.domain}</h2>
+              </div>
+              <Button variant="ghost" size="sm" onClick={() => setSelectedId(null)}>
+                <X className="h-4 w-4 mr-1.5" />Fechar
+              </Button>
+            </div>
+            <PromptManager siteId={selected.id} siteDomain={selected.domain} />
+          </section>
+        )}
       </main>
 
       <SiteForm open={open} onOpenChange={setOpen} initial={editing} onSave={save} />
