@@ -1,4 +1,3 @@
-import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { Plus, Search, X, LogOut, Lock } from "lucide-react";
 import { Toaster } from "@/components/ui/sonner";
@@ -12,17 +11,7 @@ import { PromptManager } from "@/components/dashboard/PromptManager";
 import { useAuth } from "@/lib/auth";
 import logoSrc from "@/assets/logo.avif";
 
-export const Route = createFileRoute("/")({
-  head: () => ({
-    meta: [
-      { title: "Painel de Sites — Uso interno" },
-      { name: "description", content: "Dashboard interno para organizar sites, contas, métricas SEO e snippets." },
-    ],
-  }),
-  component: Dashboard,
-});
-
-function Dashboard() {
+export default function Dashboard() {
   const { authed, ready, login, logout } = useAuth();
   if (!ready) return null;
   if (!authed) return <LoginScreen onLogin={login} />;
