@@ -67,19 +67,31 @@ export function SiteCard({ site, selected = false, onSelect, onEdit, onDelete, o
         }`}
       >
         <header className="flex items-start justify-between gap-3 mb-3">
-          <div className="min-w-0 flex-1">
-            <a
-              href={site.url}
-              target="_blank"
-              rel="noreferrer"
-              className="inline-flex items-center gap-1.5 font-semibold text-foreground hover:text-primary transition truncate"
-            >
-              <span className="truncate">{site.domain}</span>
-              <ExternalLink className="h-3.5 w-3.5 opacity-60 shrink-0" />
-            </a>
-            {site.notes && (
-              <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">{site.notes}</p>
-            )}
+          <div className="min-w-0 flex-1 flex items-start gap-2.5">
+            <img
+              src={`https://www.google.com/s2/favicons?domain=${site.domain}&sz=64`}
+              alt=""
+              loading="lazy"
+              referrerPolicy="no-referrer"
+              onError={(e) => {
+                (e.currentTarget as HTMLImageElement).style.visibility = "hidden";
+              }}
+              className="h-6 w-6 rounded-md bg-secondary/60 border border-border/60 p-0.5 shrink-0 mt-0.5"
+            />
+            <div className="min-w-0 flex-1">
+              <a
+                href={site.url}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center gap-1.5 font-semibold text-foreground hover:text-primary transition truncate"
+              >
+                <span className="truncate">{site.domain}</span>
+                <ExternalLink className="h-3.5 w-3.5 opacity-60 shrink-0" />
+              </a>
+              {site.notes && (
+                <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">{site.notes}</p>
+              )}
+            </div>
           </div>
           <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition">
             <Button variant="ghost" size="icon" className="h-7 w-7" onClick={onEdit} aria-label="Editar">
