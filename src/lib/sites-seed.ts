@@ -159,4 +159,4 @@ export const SEED_SITES: SiteRecord[] = [
 
 // Bump this whenever SEED_SITES is updated so the dashboard merges the new
 // metrics/emails into existing localStorage data (preserving user checklist/notes).
-export const SEED_VERSION = 2;
+export const SEED_VERSION = 3;
