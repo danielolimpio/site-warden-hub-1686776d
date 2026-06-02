@@ -1,9 +1,9 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Plus, Search, X, LogOut, Lock } from "lucide-react";
 import { Toaster } from "@/components/ui/sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { SEED_SITES, type ChecklistKey, type SiteRecord } from "@/lib/sites-seed";
+import { SEED_SITES, SEED_VERSION, type ChecklistKey, type SiteRecord } from "@/lib/sites-seed";
 import { useLocalStorage } from "@/lib/use-storage";
 import { SiteCard } from "@/components/dashboard/SiteCard";
 import { SiteForm } from "@/components/dashboard/SiteForm";
@@ -20,10 +20,35 @@ export default function Dashboard() {
 
 function DashboardInner({ logout }: { logout: () => void }) {
   const [sites, setSites] = useLocalStorage<SiteRecord[]>("sites.v1", SEED_SITES);
+  const [seedVersion, setSeedVersion] = useLocalStorage<number>("sites.seedVersion", 0);
   const [query, setQuery] = useState("");
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<SiteRecord | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+
+  // Merge new seed data (metrics/emails/new sites) when SEED_VERSION bumps,
+  // preserving any user-edited checklist and notes for existing sites.
+  useEffect(() => {
+    if (seedVersion === SEED_VERSION) return;
+    setSites((prev) => {
+      const byId = new Map(prev.map((s) => [s.id, s]));
+      const merged: SiteRecord[] = SEED_SITES.map((seed) => {
+        const existing = byId.get(seed.id);
+        if (!existing) return seed;
+        return {
+          ...seed,
+          notes: existing.notes ?? seed.notes,
+          checklist: { ...seed.checklist, ...existing.checklist },
+          domainAge: existing.domainAge ?? seed.domainAge,
+        };
+      });
+      // Keep user-created sites that are not in the seed.
+      const seedIds = new Set(SEED_SITES.map((s) => s.id));
+      for (const s of prev) if (!seedIds.has(s.id)) merged.push(s);
+      return merged;
+    });
+    setSeedVersion(SEED_VERSION);
+  }, [seedVersion, setSites, setSeedVersion]);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
