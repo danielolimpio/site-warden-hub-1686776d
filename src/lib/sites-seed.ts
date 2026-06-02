@@ -18,6 +18,33 @@ export interface SiteRecord {
 const c = (gsc=false, ga=false, pwa=false, seo=false, adsense=false) =>
   ({ gsc, ga, pwa, seo, adsense });
 
+const DOMAIN_AGES: Record<string, string> = {
+  "agoranabahia.com.br":"4 meses","fileconvert.cloud":"<1 mês","polartensor.trade":"1 mês",
+  "baixarvideostwitter.com":"1 mês","baixarvideosfacebook.com":"1 mês","baixarvideoskwai.com":"1 mês",
+  "baixarvideoyoutube.com":"1 mês","baixarvideostiktok.com":"2 meses","baixarvideosinstagram.com":"1 mês",
+  "batepapogratis.com":"3 meses","comoeumesintoquando.com.br":"7 meses","fatospoliticos.com.br":"4 meses",
+  "cebolla.app":"4 meses","tuangacor.com":"4 meses","unitedubai.blog":"4 meses","spazi.info":"4 meses",
+  "senin.click":"4 meses","sashko.pro":"4 meses","pelit.click":"4 meses","pedis.click":"4 meses",
+  "nikke.blog":"4 meses","nalgonas.org":"4 meses","mdgroup.pro":"4 meses","groupeforum.pro":"4 meses",
+  "bisnis.cam":"4 meses","zipfontes.com.br":"4 meses","pagin.com.br":"4 meses","acquaflux.com":"4 meses",
+  "theartofyoga.org":"7 meses","aurumfoundation.top":"5 meses","aurumfoundation.world":"5 meses",
+  "tradelidexapp.com":"5 meses","maracatubrasil.com.br":"5 meses","rankoffers.com":"6 meses",
+  "siteconfiavel.pro":"6 meses","comidasjaponesas.com":"1 ano 3 meses","efuxico.com.br":"7 meses",
+  "beijodarua.com.br":"6 meses","servicolocal.com":"6 meses","atividadeseducacaoinfantil.com":"7 meses",
+  "fazercurriculo.com":"7 meses","modelodecontrato.org":"7 meses","politicadeprivacidade.org":"7 meses",
+  "vaquinha.org":"7 meses","gaiacreative.com.br":"7 meses","upira.com.br":"7 meses",
+  "helplistas.com.br":"7 meses","tradepar.com.br":"7 meses","lojasgratis.com.br":"7 meses",
+  "clubedevantagem.com":"10 meses","horoscopodehoje.com":"1 ano 9 meses","cotacaodehoje.com":"1 ano 3 meses",
+  "vagasdetrabalhos.com":"7 meses","genoxidil.blog":"10 meses","climahoje.com":"1 ano 3 meses",
+  "culinariafitness.com":"1 ano 5 meses","universidademultinivel.com":"12 anos 2 meses",
+  "danielolimpio.com":"1 ano 9 meses","solarien.com.br":"1 ano 2 meses","segredosdoautismo.com":"11 meses",
+  "igreenenergys.com":"1 ano 2 meses","lexalexandria.com":"1 ano 5 meses","vesperbot.com":"1 ano",
+  "vespersbot.com":"1 ano","bitradex.app":"7 meses","royalq.trade":"7 meses",
+  "vitalclin.com":"7 meses","mestredodigital.com.br":"4 meses","loyello.com.br":"10 meses",
+  "brokertrusted.com":"8 meses","gruposdotelegram.org":"1 ano 4 meses","trustallamerica.com":"1 ano 7 meses",
+  "duiwin.pro":"4 meses",
+};
+
 const mk = (
   url: string,
   emails: string[],
@@ -36,7 +63,7 @@ const mk = (
     domain,
     emails,
     notes,
-    da, pa, ss, backlinks: bl, domainAge: null, traffic,
+    da, pa, ss, backlinks: bl, domainAge: DOMAIN_AGES[domain] ?? null, traffic,
     checklist: c(false, false, false, seo, false),
   };
 };
