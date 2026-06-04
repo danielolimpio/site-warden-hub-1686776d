@@ -14,9 +14,9 @@ import { toast } from "sonner";
 import logoSrc from "@/assets/logo.avif";
 
 export default function Dashboard() {
-  const { authed, ready, login, signup, logout } = useAuth();
+  const { authed, ready, login, logout } = useAuth();
   if (!ready) return null;
-  if (!authed) return <LoginScreen onLogin={login} onSignup={signup} />;
+  if (!authed) return <LoginScreen onLogin={login} />;
   return <DashboardInner logout={logout} />;
 }
 
@@ -259,23 +259,19 @@ function DashboardInner({ logout }: { logout: () => void }) {
 
 function LoginScreen({
   onLogin,
-  onSignup,
 }: {
   onLogin: (e: string, p: string) => Promise<{ ok: boolean; error?: string }>;
-  onSignup: (e: string, p: string) => Promise<{ ok: boolean; error?: string }>;
 }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
-  const [mode, setMode] = useState<"login" | "signup">("login");
   const [busy, setBusy] = useState(false);
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
     setBusy(true);
-    const fn = mode === "login" ? onLogin : onSignup;
-    const res = await fn(email, password);
+    const res = await onLogin(email, password);
     setBusy(false);
     if (!res.ok) setError(res.error ?? "Não foi possível autenticar.");
   };
@@ -291,9 +287,7 @@ function LoginScreen({
           <img src={logoSrc} alt="Logo" className="h-10 w-10 rounded-xl object-contain" />
           <div>
             <h1 className="font-semibold leading-none">Painel de Sites</h1>
-            <p className="text-xs text-muted-foreground mt-1">
-              {mode === "login" ? "Acesso restrito" : "Criar conta de acesso"}
-            </p>
+            <p className="text-xs text-muted-foreground mt-1">Acesso restrito</p>
           </div>
         </div>
         <label className="block text-xs font-medium text-muted-foreground mb-1.5">E-mail</label>
@@ -310,7 +304,7 @@ function LoginScreen({
           type="password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
-          autoComplete={mode === "login" ? "current-password" : "new-password"}
+          autoComplete="current-password"
           required
           minLength={6}
           className="mb-4"
@@ -318,15 +312,8 @@ function LoginScreen({
         {error && <p className="text-xs text-destructive mb-3">{error}</p>}
         <Button type="submit" className="w-full" disabled={busy}>
           {busy ? <Loader2 className="h-4 w-4 mr-1.5 animate-spin" /> : <Lock className="h-4 w-4 mr-1.5" />}
-          {mode === "login" ? "Entrar" : "Criar conta"}
+          Entrar
         </Button>
-        <button
-          type="button"
-          onClick={() => { setMode(mode === "login" ? "signup" : "login"); setError(""); }}
-          className="block w-full text-center text-xs text-muted-foreground hover:text-foreground mt-4"
-        >
-          {mode === "login" ? "Primeira vez? Criar conta" : "Já tenho conta · Entrar"}
-        </button>
       </form>
     </div>
   );
