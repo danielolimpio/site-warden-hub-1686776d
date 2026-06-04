@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Plus, Search, X, LogOut, Lock } from "lucide-react";
+import { Plus, Search, X, LogOut, Lock, Cloud, CloudDownload, Loader2 } from "lucide-react";
 import { Toaster } from "@/components/ui/sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,12 +9,14 @@ import { SiteCard } from "@/components/dashboard/SiteCard";
 import { SiteForm } from "@/components/dashboard/SiteForm";
 import { PromptManager } from "@/components/dashboard/PromptManager";
 import { useAuth } from "@/lib/auth";
+import { saveSnapshot, loadSnapshot } from "@/lib/cloud-sync";
+import { toast } from "sonner";
 import logoSrc from "@/assets/logo.avif";
 
 export default function Dashboard() {
-  const { authed, ready, login, logout } = useAuth();
+  const { authed, ready, login, signup, logout } = useAuth();
   if (!ready) return null;
-  if (!authed) return <LoginScreen onLogin={login} />;
+  if (!authed) return <LoginScreen onLogin={login} onSignup={signup} />;
   return <DashboardInner logout={logout} />;
 }
 
@@ -25,6 +27,34 @@ function DashboardInner({ logout }: { logout: () => void }) {
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<SiteRecord | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [loadingCloud, setLoadingCloud] = useState(true);
+  const [lastSaved, setLastSaved] = useState<string | null>(null);
+
+  // On first mount, try to hydrate from cloud snapshot.
+  // If a snapshot exists, apply it and reload so all useLocalStorage hooks re-read.
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const alreadyHydrated = sessionStorage.getItem("cloud.hydrated") === "1";
+      if (alreadyHydrated) {
+        setLoadingCloud(false);
+        return;
+      }
+      const res = await loadSnapshot();
+      if (cancelled) return;
+      sessionStorage.setItem("cloud.hydrated", "1");
+      if (res.applied) {
+        setLastSaved(res.savedAt ?? null);
+        // Reload so useLocalStorage hooks pick up fresh values.
+        window.location.reload();
+        return;
+      }
+      if (res.error) toast.error("Falha ao baixar dados da nuvem", { description: res.error });
+      setLoadingCloud(false);
+    })();
+    return () => { cancelled = true; };
+  }, []);
 
   // Merge new seed data (metrics/emails/new sites) when SEED_VERSION bumps,
   // preserving any user-edited checklist and notes for existing sites.
@@ -49,6 +79,27 @@ function DashboardInner({ logout }: { logout: () => void }) {
     });
     setSeedVersion(SEED_VERSION);
   }, [seedVersion, setSites, setSeedVersion]);
+
+  const handleSaveAll = async () => {
+    setSaving(true);
+    const res = await saveSnapshot();
+    setSaving(false);
+    if (res.ok) {
+      setLastSaved(res.savedAt ?? new Date().toISOString());
+      toast.success("Tudo salvo na nuvem", { description: "Sites, métricas, checklists e prompts." });
+    } else {
+      toast.error("Erro ao salvar", { description: res.error });
+    }
+  };
+
+  const handlePullCloud = async () => {
+    if (!confirm("Substituir os dados deste navegador pelos dados salvos na nuvem?")) return;
+    const res = await loadSnapshot();
+    if (!res.ok) { toast.error("Erro ao baixar", { description: res.error }); return; }
+    if (!res.applied) { toast.info("Nenhum snapshot salvo na nuvem ainda."); return; }
+    toast.success("Dados restaurados — recarregando...");
+    setTimeout(() => window.location.reload(), 600);
+  };
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -93,6 +144,14 @@ function DashboardInner({ logout }: { logout: () => void }) {
   const toggle = (id: string, key: ChecklistKey, v: boolean) => {
     setSites((prev) => prev.map((s) => (s.id === id ? { ...s, checklist: { ...s.checklist, [key]: v } } : s)));
   };
+
+  if (loadingCloud) {
+    return (
+      <div className="min-h-screen flex items-center justify-center text-muted-foreground text-sm">
+        <Loader2 className="h-4 w-4 mr-2 animate-spin" /> Carregando dados da nuvem...
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background lg:pl-[400px]">
@@ -143,6 +202,19 @@ function DashboardInner({ logout }: { logout: () => void }) {
             <Button onClick={() => { setEditing(null); setOpen(true); }}>
               <Plus className="h-4 w-4 mr-1.5" />Novo site
             </Button>
+            <Button
+              onClick={handleSaveAll}
+              disabled={saving}
+              variant="default"
+              className="bg-[oklch(0.55_0.18_150)] hover:bg-[oklch(0.5_0.18_150)] text-white"
+              title={lastSaved ? `Último salvamento: ${new Date(lastSaved).toLocaleString("pt-BR")}` : "Enviar tudo para a nuvem"}
+            >
+              {saving ? <Loader2 className="h-4 w-4 mr-1.5 animate-spin" /> : <Cloud className="h-4 w-4 mr-1.5" />}
+              {saving ? "Salvando..." : "Salvar tudo"}
+            </Button>
+            <Button variant="outline" size="sm" onClick={handlePullCloud} title="Baixar dados da nuvem (substitui locais)">
+              <CloudDownload className="h-4 w-4" />
+            </Button>
             <Button variant="outline" size="sm" onClick={logout} title="Sair">
               <LogOut className="h-4 w-4" />
             </Button>
@@ -185,14 +257,27 @@ function DashboardInner({ logout }: { logout: () => void }) {
   );
 }
 
-function LoginScreen({ onLogin }: { onLogin: (e: string, p: string) => boolean }) {
+function LoginScreen({
+  onLogin,
+  onSignup,
+}: {
+  onLogin: (e: string, p: string) => Promise<{ ok: boolean; error?: string }>;
+  onSignup: (e: string, p: string) => Promise<{ ok: boolean; error?: string }>;
+}) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [mode, setMode] = useState<"login" | "signup">("login");
+  const [busy, setBusy] = useState(false);
 
-  const submit = (e: React.FormEvent) => {
+  const submit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!onLogin(email, password)) setError("E-mail ou senha incorretos.");
+    setError("");
+    setBusy(true);
+    const fn = mode === "login" ? onLogin : onSignup;
+    const res = await fn(email, password);
+    setBusy(false);
+    if (!res.ok) setError(res.error ?? "Não foi possível autenticar.");
   };
 
   return (
@@ -206,7 +291,9 @@ function LoginScreen({ onLogin }: { onLogin: (e: string, p: string) => boolean }
           <img src={logoSrc} alt="Logo" className="h-10 w-10 rounded-xl object-contain" />
           <div>
             <h1 className="font-semibold leading-none">Painel de Sites</h1>
-            <p className="text-xs text-muted-foreground mt-1">Acesso restrito</p>
+            <p className="text-xs text-muted-foreground mt-1">
+              {mode === "login" ? "Acesso restrito" : "Criar conta de acesso"}
+            </p>
           </div>
         </div>
         <label className="block text-xs font-medium text-muted-foreground mb-1.5">E-mail</label>
@@ -223,14 +310,23 @@ function LoginScreen({ onLogin }: { onLogin: (e: string, p: string) => boolean }
           type="password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
-          autoComplete="current-password"
+          autoComplete={mode === "login" ? "current-password" : "new-password"}
           required
+          minLength={6}
           className="mb-4"
         />
         {error && <p className="text-xs text-destructive mb-3">{error}</p>}
-        <Button type="submit" className="w-full">
-          <Lock className="h-4 w-4 mr-1.5" />Entrar
+        <Button type="submit" className="w-full" disabled={busy}>
+          {busy ? <Loader2 className="h-4 w-4 mr-1.5 animate-spin" /> : <Lock className="h-4 w-4 mr-1.5" />}
+          {mode === "login" ? "Entrar" : "Criar conta"}
         </Button>
+        <button
+          type="button"
+          onClick={() => { setMode(mode === "login" ? "signup" : "login"); setError(""); }}
+          className="block w-full text-center text-xs text-muted-foreground hover:text-foreground mt-4"
+        >
+          {mode === "login" ? "Primeira vez? Criar conta" : "Já tenho conta · Entrar"}
+        </button>
       </form>
     </div>
   );

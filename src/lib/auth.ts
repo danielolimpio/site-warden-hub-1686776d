@@ -1,33 +1,43 @@
 import { useCallback, useEffect, useState } from "react";
-
-const KEY = "auth.v1";
-export const ADMIN_EMAIL = "canalbocarose@gmail.com";
-export const ADMIN_PASSWORD = "Vale30Night80*";
+import type { Session } from "@supabase/supabase-js";
+import { supabase } from "@/integrations/supabase/client";
 
 export function useAuth() {
-  const [authed, setAuthed] = useState<boolean>(false);
+  const [session, setSession] = useState<Session | null>(null);
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
-    try {
-      setAuthed(window.localStorage.getItem(KEY) === "1");
-    } catch {}
-    setReady(true);
+    const { data: sub } = supabase.auth.onAuthStateChange((_e, s) => {
+      setSession(s);
+      setReady(true);
+    });
+    supabase.auth.getSession().then(({ data }) => {
+      setSession(data.session);
+      setReady(true);
+    });
+    return () => sub.subscription.unsubscribe();
   }, []);
 
-  const login = useCallback((email: string, password: string) => {
-    if (email.trim().toLowerCase() === ADMIN_EMAIL && password === ADMIN_PASSWORD) {
-      window.localStorage.setItem(KEY, "1");
-      setAuthed(true);
-      return true;
-    }
-    return false;
+  const login = useCallback(async (email: string, password: string) => {
+    const { error } = await supabase.auth.signInWithPassword({
+      email: email.trim(),
+      password,
+    });
+    return { ok: !error, error: error?.message };
   }, []);
 
-  const logout = useCallback(() => {
-    window.localStorage.removeItem(KEY);
-    setAuthed(false);
+  const signup = useCallback(async (email: string, password: string) => {
+    const { error } = await supabase.auth.signUp({
+      email: email.trim(),
+      password,
+      options: { emailRedirectTo: `${window.location.origin}/` },
+    });
+    return { ok: !error, error: error?.message };
   }, []);
 
-  return { authed, ready, login, logout };
+  const logout = useCallback(async () => {
+    await supabase.auth.signOut();
+  }, []);
+
+  return { authed: !!session, ready, login, signup, logout, session };
 }
