@@ -74,7 +74,12 @@ export async function saveSnapshot(
   return { ok: true, savedAt: snapshot.savedAt };
 }
 
-export async function loadSnapshot(): Promise<{ ok: boolean; applied: boolean; error?: string; savedAt?: string }> {
+export async function loadSnapshot(): Promise<{
+  ok: boolean;
+  applied: boolean;
+  error?: string;
+  savedAt?: string;
+}> {
   const { data, error } = await supabase
     .from("app_state")
     .select("data, updated_at")
