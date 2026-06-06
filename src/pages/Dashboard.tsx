@@ -389,3 +389,32 @@ function Stat({ label, value, accent = false }: { label: string; value: number; 
     </div>
   );
 }
+
+function AutoSyncBadge({
+  status,
+  lastSaved,
+}: {
+  status: "idle" | "pending" | "saving" | "saved" | "error";
+  lastSaved: string | null;
+}) {
+  const title = lastSaved
+    ? `Último salvamento automático: ${new Date(lastSaved).toLocaleString("pt-BR")}`
+    : "Salvamento automático na nuvem";
+  const map = {
+    idle: { icon: <Cloud className="h-3.5 w-3.5" />, text: "Sincronizado", tone: "text-muted-foreground" },
+    pending: { icon: <Loader2 className="h-3.5 w-3.5 animate-spin" />, text: "Pendente…", tone: "text-muted-foreground" },
+    saving: { icon: <Loader2 className="h-3.5 w-3.5 animate-spin" />, text: "Salvando…", tone: "text-muted-foreground" },
+    saved: { icon: <Check className="h-3.5 w-3.5" />, text: "Salvo", tone: "text-[oklch(0.55_0.18_150)]" },
+    error: { icon: <Cloud className="h-3.5 w-3.5" />, text: "Erro ao salvar", tone: "text-destructive" },
+  } as const;
+  const cur = map[status];
+  return (
+    <span
+      title={title}
+      className={`hidden md:inline-flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-md border border-border bg-card ${cur.tone}`}
+    >
+      {cur.icon}
+      {cur.text}
+    </span>
+  );
+}
