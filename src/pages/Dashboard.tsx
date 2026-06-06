@@ -117,8 +117,8 @@ function DashboardInner({ logout }: { logout: () => void }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loadingCloud]);
 
-  // Merge new seed data (metrics/emails/new sites) when SEED_VERSION bumps,
-  // preserving any user-edited checklist and notes for existing sites.
+  // Merge new seed data when SEED_VERSION bumps, preserving user-edited fields
+  // for existing sites so saved emails/metrics/checklists never revert.
   useEffect(() => {
     if (seedVersion === SEED_VERSION) return;
     setSites((prev) => {
@@ -128,9 +128,15 @@ function DashboardInner({ logout }: { logout: () => void }) {
         if (!existing) return seed;
         return {
           ...seed,
+          emails: existing.emails ?? seed.emails,
           notes: existing.notes ?? seed.notes,
+          da: existing.da ?? seed.da,
+          pa: existing.pa ?? seed.pa,
+          ss: existing.ss ?? seed.ss,
+          backlinks: existing.backlinks ?? seed.backlinks,
           checklist: { ...seed.checklist, ...existing.checklist },
           domainAge: existing.domainAge ?? seed.domainAge,
+          traffic: existing.traffic ?? seed.traffic,
         };
       });
       // Keep user-created sites that are not in the seed.
