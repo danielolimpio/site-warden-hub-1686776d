@@ -17,7 +17,9 @@ function writeLS<T>(key: string, value: T) {
     // Notify same-window listeners (the native `storage` event only fires
     // across tabs). Auto-sync uses this to push changes to the cloud.
     window.dispatchEvent(new CustomEvent("ls:write", { detail: { key } }));
-  } catch {}
+  } catch {
+    // localStorage can be unavailable in private mode or blocked browsers.
+  }
 }
 
 /**
@@ -30,10 +32,7 @@ function writeLS<T>(key: string, value: T) {
  * - Handles key changes (re-hydrates for the new key).
  * - Cross-tab sync via the `storage` event.
  */
-export function useLocalStorage<T>(
-  key: string,
-  initial: T,
-): [T, (v: T | ((p: T) => T)) => void] {
+export function useLocalStorage<T>(key: string, initial: T): [T, (v: T | ((p: T) => T)) => void] {
   const [value, setValue] = useState<T>(initial);
   const valueRef = useRef(value);
   const hydratedRef = useRef(false);
@@ -67,7 +66,9 @@ export function useLocalStorage<T>(
         const next = JSON.parse(e.newValue) as T;
         valueRef.current = next;
         setValue(next);
-      } catch {}
+      } catch {
+        // Ignore malformed values written by other tabs.
+      }
     };
     window.addEventListener("storage", onStorage);
     return () => window.removeEventListener("storage", onStorage);
