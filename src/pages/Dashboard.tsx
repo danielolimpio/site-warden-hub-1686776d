@@ -53,6 +53,7 @@ function DashboardInner({ logout }: { logout: () => void }) {
           window.location.reload();
           return;
         }
+        setLoadingCloud(false);
         return;
       }
       if (res.error) toast.error("Falha ao baixar dados da nuvem", { description: res.error });
