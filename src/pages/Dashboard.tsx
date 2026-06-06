@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useState } from "react";
-import { Plus, Search, X, LogOut, Lock, Cloud, CloudDownload, Loader2 } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Plus, Search, X, LogOut, Lock, Cloud, CloudDownload, Loader2, Check } from "lucide-react";
 import { Toaster } from "@/components/ui/sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,7 +9,7 @@ import { SiteCard } from "@/components/dashboard/SiteCard";
 import { SiteForm } from "@/components/dashboard/SiteForm";
 import { PromptManager } from "@/components/dashboard/PromptManager";
 import { useAuth } from "@/lib/auth";
-import { saveSnapshot, loadSnapshot } from "@/lib/cloud-sync";
+import { saveSnapshot, loadSnapshot, isSyncedKey } from "@/lib/cloud-sync";
 import { toast } from "sonner";
 import logoSrc from "@/assets/logo.avif";
 
@@ -30,6 +30,9 @@ function DashboardInner({ logout }: { logout: () => void }) {
   const [saving, setSaving] = useState(false);
   const [loadingCloud, setLoadingCloud] = useState(true);
   const [lastSaved, setLastSaved] = useState<string | null>(null);
+  const [autoStatus, setAutoStatus] = useState<"idle" | "pending" | "saving" | "saved" | "error">("idle");
+  const autoTimerRef = useRef<number | null>(null);
+  const autoSavingRef = useRef(false);
 
   // On first mount, try to hydrate from cloud snapshot.
   // If a snapshot exists, apply it and reload so all useLocalStorage hooks re-read.
@@ -55,6 +58,64 @@ function DashboardInner({ logout }: { logout: () => void }) {
     })();
     return () => { cancelled = true; };
   }, []);
+
+  // ---------- Auto-sync on every change ----------
+  // Any write to a synced localStorage key (sites.v1, prompts.v2.*) schedules
+  // a debounced push to the cloud so the user never loses data, even without
+  // clicking "Salvar tudo".
+  useEffect(() => {
+    if (loadingCloud) return;
+
+    const flush = async () => {
+      if (autoSavingRef.current) {
+        // Re-arm if a save is already in flight; we'll catch the latest state on the next tick.
+        scheduleSave();
+        return;
+      }
+      autoSavingRef.current = true;
+      setAutoStatus("saving");
+      const res = await saveSnapshot();
+      autoSavingRef.current = false;
+      if (res.ok) {
+        setLastSaved(res.savedAt ?? new Date().toISOString());
+        setAutoStatus("saved");
+        window.setTimeout(() => setAutoStatus((s) => (s === "saved" ? "idle" : s)), 2000);
+      } else {
+        setAutoStatus("error");
+        toast.error("Falha ao salvar na nuvem", { description: res.error });
+      }
+    };
+
+    const scheduleSave = () => {
+      setAutoStatus("pending");
+      if (autoTimerRef.current) window.clearTimeout(autoTimerRef.current);
+      autoTimerRef.current = window.setTimeout(flush, 1200);
+    };
+
+    const onWrite = (e: Event) => {
+      const key = (e as CustomEvent<{ key: string }>).detail?.key;
+      if (!key || !isSyncedKey(key)) return;
+      scheduleSave();
+    };
+
+    // Flush pending save before the tab closes.
+    const onBeforeUnload = () => {
+      if (autoStatus === "pending" && autoTimerRef.current) {
+        window.clearTimeout(autoTimerRef.current);
+        // Best-effort synchronous-ish save (the request may not complete, but worth trying).
+        void saveSnapshot();
+      }
+    };
+
+    window.addEventListener("ls:write", onWrite);
+    window.addEventListener("beforeunload", onBeforeUnload);
+    return () => {
+      window.removeEventListener("ls:write", onWrite);
+      window.removeEventListener("beforeunload", onBeforeUnload);
+      if (autoTimerRef.current) window.clearTimeout(autoTimerRef.current);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loadingCloud]);
 
   // Merge new seed data (metrics/emails/new sites) when SEED_VERSION bumps,
   // preserving any user-edited checklist and notes for existing sites.
@@ -202,6 +263,7 @@ function DashboardInner({ logout }: { logout: () => void }) {
             <Button onClick={() => { setEditing(null); setOpen(true); }}>
               <Plus className="h-4 w-4 mr-1.5" />Novo site
             </Button>
+            <AutoSyncBadge status={autoStatus} lastSaved={lastSaved} />
             <Button
               onClick={handleSaveAll}
               disabled={saving}
