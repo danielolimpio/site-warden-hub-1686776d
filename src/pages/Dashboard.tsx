@@ -197,16 +197,21 @@ function DashboardInner({ logout }: { logout: () => void }) {
   }, [sites]);
 
   const save = async (s: SiteRecord) => {
+    let nextSites: SiteRecord[] = [];
     setSites((prev) => {
       const i = prev.findIndex((x) => x.id === s.id);
-      if (i === -1) return [s, ...prev];
+      if (i === -1) {
+        nextSites = [s, ...prev];
+        return nextSites;
+      }
       const next = prev.slice();
       next[i] = s;
+      nextSites = next;
       return next;
     });
     // Push to cloud immediately (no debounce) so a quick refresh can't lose the edit.
     setAutoStatus("saving");
-    const res = await saveSnapshot();
+    const res = await saveSnapshot({ "sites.v1": nextSites });
     if (res.ok) {
       setLastSaved(res.savedAt ?? new Date().toISOString());
       setAutoStatus("saved");
