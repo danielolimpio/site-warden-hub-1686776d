@@ -33,24 +33,26 @@ function DashboardInner({ logout }: { logout: () => void }) {
   const [autoStatus, setAutoStatus] = useState<"idle" | "pending" | "saving" | "saved" | "error">("idle");
   const autoTimerRef = useRef<number | null>(null);
   const autoSavingRef = useRef(false);
+  const rememberCloudSavedAt = (savedAt?: string | null) => {
+    if (savedAt) sessionStorage.setItem("cloud.hydrated.savedAt", savedAt);
+  };
 
   // On first mount, try to hydrate from cloud snapshot.
   // If a snapshot exists, apply it and reload so all useLocalStorage hooks re-read.
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      const alreadyHydrated = sessionStorage.getItem("cloud.hydrated") === "1";
-      if (alreadyHydrated) {
-        setLoadingCloud(false);
-        return;
-      }
+      const lastAppliedSavedAt = sessionStorage.getItem("cloud.hydrated.savedAt");
       const res = await loadSnapshot();
       if (cancelled) return;
-      sessionStorage.setItem("cloud.hydrated", "1");
       if (res.applied) {
         setLastSaved(res.savedAt ?? null);
-        // Reload so useLocalStorage hooks pick up fresh values.
-        window.location.reload();
+        rememberCloudSavedAt(res.savedAt);
+        if (res.savedAt !== lastAppliedSavedAt) {
+          // Reload so useLocalStorage hooks pick up fresh values from cloud.
+          window.location.reload();
+          return;
+        }
         return;
       }
       if (res.error) toast.error("Falha ao baixar dados da nuvem", { description: res.error });
