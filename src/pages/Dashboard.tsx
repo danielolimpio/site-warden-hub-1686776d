@@ -187,7 +187,7 @@ function DashboardInner({ logout }: { logout: () => void }) {
     return { total, seoDone, gscDone, adsense };
   }, [sites]);
 
-  const save = (s: SiteRecord) => {
+  const save = async (s: SiteRecord) => {
     setSites((prev) => {
       const i = prev.findIndex((x) => x.id === s.id);
       if (i === -1) return [s, ...prev];
@@ -195,6 +195,18 @@ function DashboardInner({ logout }: { logout: () => void }) {
       next[i] = s;
       return next;
     });
+    // Push to cloud immediately (no debounce) so a quick refresh can't lose the edit.
+    setAutoStatus("saving");
+    const res = await saveSnapshot();
+    if (res.ok) {
+      setLastSaved(res.savedAt ?? new Date().toISOString());
+      setAutoStatus("saved");
+      toast.success("Site salvo na nuvem", { description: s.domain });
+      window.setTimeout(() => setAutoStatus((cur) => (cur === "saved" ? "idle" : cur)), 2000);
+    } else {
+      setAutoStatus("error");
+      toast.error("Erro ao salvar na nuvem", { description: res.error });
+    }
   };
 
   const remove = (id: string) => {
