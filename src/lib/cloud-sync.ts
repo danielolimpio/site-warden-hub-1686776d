@@ -17,6 +17,10 @@ const STATE_ID = "global";
 const SYNC_PREFIXES = ["prompts.v2."];
 const SYNC_EXACT = ["sites.v1", "sites.seedVersion"];
 
+export function isSyncedKey(key: string): boolean {
+  return SYNC_EXACT.includes(key) || SYNC_PREFIXES.some((p) => key.startsWith(p));
+}
+
 export type Snapshot = {
   version: 1;
   entries: Record<string, unknown>;
