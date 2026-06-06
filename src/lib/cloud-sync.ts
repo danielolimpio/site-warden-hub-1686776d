@@ -59,10 +59,12 @@ function applyLocal(entries: Record<string, unknown>) {
   }
 }
 
-export async function saveSnapshot(): Promise<{ ok: boolean; error?: string; savedAt?: string }> {
+export async function saveSnapshot(
+  overrides: Record<string, unknown> = {},
+): Promise<{ ok: boolean; error?: string; savedAt?: string }> {
   const snapshot: Snapshot = {
     version: 1,
-    entries: collectLocal(),
+    entries: { ...collectLocal(), ...overrides },
     savedAt: new Date().toISOString(),
   };
   const { error } = await supabase
@@ -72,7 +74,12 @@ export async function saveSnapshot(): Promise<{ ok: boolean; error?: string; sav
   return { ok: true, savedAt: snapshot.savedAt };
 }
 
-export async function loadSnapshot(): Promise<{ ok: boolean; applied: boolean; error?: string; savedAt?: string }> {
+export async function loadSnapshot(): Promise<{
+  ok: boolean;
+  applied: boolean;
+  error?: string;
+  savedAt?: string;
+}> {
   const { data, error } = await supabase
     .from("app_state")
     .select("data, updated_at")

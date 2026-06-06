@@ -99,7 +99,7 @@ export const SEED_SITES: SiteRecord[] = [
   mk("https://zipfontes.com.br", ["cotacaodehoje@gmail.com"], 24, 25, 15, 95, null),
   mk("https://mercadolivredenergia.org", ["boulevardmondebrasil@gmail.com"], 1, 1, null, 0, null),
   mk("https://pagin.com.br", [], 1, 1, null, 0, null),
-  mk("https://acquaflux.com", ["danielmoreira33@gmail.com"], 1, 20, 12, 17, null),
+  mk("https://acquaflux.com", ["4familydobrasil@gmail.com"], 1, 20, 12, 17, null),
   mk("https://theartofyoga.org", ["danielmoreira9@gmail.com"], 24, 43, 15, 7100, null),
   mk("https://aurumfoundation.top", ["danielmoreira21@gmail.com"], 1, 5, null, 1, null),
   mk("https://aurumfoundation.world", ["empregosvaleparaiba@gmail.com"], 2, 16, null, 9, null),
@@ -159,4 +159,4 @@ export const SEED_SITES: SiteRecord[] = [
 
 // Bump this whenever SEED_SITES is updated so the dashboard merges the new
 // metrics/emails into existing localStorage data (preserving user checklist/notes).
-export const SEED_VERSION = 3;
+export const SEED_VERSION = 4;

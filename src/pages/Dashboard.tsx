@@ -33,24 +33,27 @@ function DashboardInner({ logout }: { logout: () => void }) {
   const [autoStatus, setAutoStatus] = useState<"idle" | "pending" | "saving" | "saved" | "error">("idle");
   const autoTimerRef = useRef<number | null>(null);
   const autoSavingRef = useRef(false);
+  const rememberCloudSavedAt = (savedAt?: string | null) => {
+    if (savedAt) sessionStorage.setItem("cloud.hydrated.savedAt", savedAt);
+  };
 
   // On first mount, try to hydrate from cloud snapshot.
   // If a snapshot exists, apply it and reload so all useLocalStorage hooks re-read.
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      const alreadyHydrated = sessionStorage.getItem("cloud.hydrated") === "1";
-      if (alreadyHydrated) {
-        setLoadingCloud(false);
-        return;
-      }
+      const lastAppliedSavedAt = sessionStorage.getItem("cloud.hydrated.savedAt");
       const res = await loadSnapshot();
       if (cancelled) return;
-      sessionStorage.setItem("cloud.hydrated", "1");
       if (res.applied) {
         setLastSaved(res.savedAt ?? null);
-        // Reload so useLocalStorage hooks pick up fresh values.
-        window.location.reload();
+        rememberCloudSavedAt(res.savedAt);
+        if (res.savedAt !== lastAppliedSavedAt) {
+          // Reload so useLocalStorage hooks pick up fresh values from cloud.
+          window.location.reload();
+          return;
+        }
+        setLoadingCloud(false);
         return;
       }
       if (res.error) toast.error("Falha ao baixar dados da nuvem", { description: res.error });
@@ -117,8 +120,8 @@ function DashboardInner({ logout }: { logout: () => void }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loadingCloud]);
 
-  // Merge new seed data (metrics/emails/new sites) when SEED_VERSION bumps,
-  // preserving any user-edited checklist and notes for existing sites.
+  // Merge new seed data when SEED_VERSION bumps, preserving user-edited fields
+  // for existing sites so saved emails/metrics/checklists never revert.
   useEffect(() => {
     if (seedVersion === SEED_VERSION) return;
     setSites((prev) => {
@@ -128,9 +131,15 @@ function DashboardInner({ logout }: { logout: () => void }) {
         if (!existing) return seed;
         return {
           ...seed,
+          emails: existing.emails ?? seed.emails,
           notes: existing.notes ?? seed.notes,
+          da: existing.da ?? seed.da,
+          pa: existing.pa ?? seed.pa,
+          ss: existing.ss ?? seed.ss,
+          backlinks: existing.backlinks ?? seed.backlinks,
           checklist: { ...seed.checklist, ...existing.checklist },
           domainAge: existing.domainAge ?? seed.domainAge,
+          traffic: existing.traffic ?? seed.traffic,
         };
       });
       // Keep user-created sites that are not in the seed.
@@ -188,16 +197,21 @@ function DashboardInner({ logout }: { logout: () => void }) {
   }, [sites]);
 
   const save = async (s: SiteRecord) => {
+    let nextSites: SiteRecord[] = [];
     setSites((prev) => {
       const i = prev.findIndex((x) => x.id === s.id);
-      if (i === -1) return [s, ...prev];
+      if (i === -1) {
+        nextSites = [s, ...prev];
+        return nextSites;
+      }
       const next = prev.slice();
       next[i] = s;
+      nextSites = next;
       return next;
     });
     // Push to cloud immediately (no debounce) so a quick refresh can't lose the edit.
     setAutoStatus("saving");
-    const res = await saveSnapshot();
+    const res = await saveSnapshot({ "sites.v1": nextSites });
     if (res.ok) {
       setLastSaved(res.savedAt ?? new Date().toISOString());
       setAutoStatus("saved");

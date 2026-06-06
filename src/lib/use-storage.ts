@@ -17,7 +17,9 @@ function writeLS<T>(key: string, value: T) {
     // Notify same-window listeners (the native `storage` event only fires
     // across tabs). Auto-sync uses this to push changes to the cloud.
     window.dispatchEvent(new CustomEvent("ls:write", { detail: { key } }));
-  } catch {}
+  } catch {
+    // localStorage can be unavailable in private mode or blocked browsers.
+  }
 }
 
 /**
@@ -30,11 +32,9 @@ function writeLS<T>(key: string, value: T) {
  * - Handles key changes (re-hydrates for the new key).
  * - Cross-tab sync via the `storage` event.
  */
-export function useLocalStorage<T>(
-  key: string,
-  initial: T,
-): [T, (v: T | ((p: T) => T)) => void] {
+export function useLocalStorage<T>(key: string, initial: T): [T, (v: T | ((p: T) => T)) => void] {
   const [value, setValue] = useState<T>(initial);
+  const valueRef = useRef(value);
   const hydratedRef = useRef(false);
   const keyRef = useRef(key);
 
@@ -43,8 +43,9 @@ export function useLocalStorage<T>(
     keyRef.current = key;
     hydratedRef.current = false;
     const stored = readLS<T | undefined>(key, undefined as unknown as T);
-    if (stored !== undefined) setValue(stored);
-    else setValue(initial);
+    const next = stored !== undefined ? stored : initial;
+    valueRef.current = next;
+    setValue(next);
     hydratedRef.current = true;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [key]);
@@ -52,6 +53,7 @@ export function useLocalStorage<T>(
   // Persist whenever value changes (after hydration).
   useEffect(() => {
     if (!hydratedRef.current) return;
+    valueRef.current = value;
     writeLS(key, value);
   }, [key, value]);
 
@@ -61,8 +63,12 @@ export function useLocalStorage<T>(
     const onStorage = (e: StorageEvent) => {
       if (e.key !== key || e.newValue == null) return;
       try {
-        setValue(JSON.parse(e.newValue) as T);
-      } catch {}
+        const next = JSON.parse(e.newValue) as T;
+        valueRef.current = next;
+        setValue(next);
+      } catch {
+        // Ignore malformed values written by other tabs.
+      }
     };
     window.addEventListener("storage", onStorage);
     return () => window.removeEventListener("storage", onStorage);
@@ -70,12 +76,11 @@ export function useLocalStorage<T>(
 
   const set = useCallback(
     (v: T | ((p: T) => T)) => {
-      setValue((prev) => {
-        const next = typeof v === "function" ? (v as (p: T) => T)(prev) : v;
-        // Write synchronously too so rapid unmounts don't lose data.
-        if (hydratedRef.current) writeLS(key, next);
-        return next;
-      });
+      const next = typeof v === "function" ? (v as (p: T) => T)(valueRef.current) : v;
+      valueRef.current = next;
+      // Write synchronously so cloud sync/manual saves never read stale data.
+      if (hydratedRef.current) writeLS(key, next);
+      setValue(next);
     },
     [key],
   );
