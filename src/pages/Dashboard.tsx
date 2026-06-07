@@ -123,6 +123,7 @@ function DashboardInner({ logout }: { logout: () => void }) {
   // Merge new seed data when SEED_VERSION bumps, preserving user-edited fields
   // for existing sites so saved emails/metrics/checklists never revert.
   useEffect(() => {
+    if (loadingCloud) return;
     if (seedVersion === SEED_VERSION) return;
     setSites((prev) => {
       const byId = new Map(prev.map((s) => [s.id, s]));
@@ -148,7 +149,7 @@ function DashboardInner({ logout }: { logout: () => void }) {
       return merged;
     });
     setSeedVersion(SEED_VERSION);
-  }, [seedVersion, setSites, setSeedVersion]);
+  }, [loadingCloud, seedVersion, setSites, setSeedVersion]);
 
   const handleSaveAll = async () => {
     setSaving(true);
