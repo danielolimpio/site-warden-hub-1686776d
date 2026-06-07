@@ -73,7 +73,7 @@ export const SEED_SITES: SiteRecord[] = [
   mk("https://fileconvert.cloud", [], 1, 18, null, 14, null),
   mk("https://marmorarias.shop", [], 1, 1, null, 0, null),
   mk("https://polartensor.trade", [], 1, 1, null, 0, null),
-  mk("https://baixarvideostwitter.com", [], 1, 5, null, 1, null),
+  mk("https://baixarvideostwitter.com", ["baixarvideosyoutube@gmail.com"], 1, 5, null, 1, null),
   mk("https://baixarvideosfacebook.com", ["baixarvideosdoinstagram@gmail.com"], 8, 10, 8, 3, null),
   mk("https://baixarvideoskwai.com", ["vagasetrabalhos@gmail.com"], 1, 5, null, 1, null),
   mk("https://baixarvideoyoutube.com", ["danielmoreira81@gmail.com"], 5, 25, 9, 63, null),
@@ -128,9 +128,9 @@ export const SEED_SITES: SiteRecord[] = [
   mk("https://genoxidil.blog", ["4movecadastrar@gmail.com"], 1, 8, 11, 2, null),
   mk("https://climahoje.com", ["danielmoreira60@gmail.com"], 1, 19, null, 15, null),
   mk("https://culinariafitness.com", ["danielmoreira27@gmail.com"], 1, 13, 1, 6, null),
-  mk("https://universidademultinivel.com", ["solarineenergy@gmail.com"], 15, 21, 1, 79, null),
+  mk("https://universidademultinivel.com", ["solarienenergy@gmail.com"], 15, 21, 1, 79, null),
   mk("https://danielolimpio.com", ["universidademultinivel@gmail.com"], 14, 22, 9, 25, null),
-  mk("https://solarien.com.br", [], 2, 3, null, 1, null),
+  mk("https://solarien.com.br", ["universidademultinivel@gmail.com"], 2, 3, null, 1, null),
   mk("https://segredosdoautismo.com", ["universidademultinivel@gmail.com"], 1, 17, 3, 12, null),
   mk("https://igreenenergys.com", ["4familydobrasil@gmail.com"], 1, 16, 2, 9, null),
   mk("https://lexalexandria.com", ["oclubededesconto@gmail.com"], 1, 13, null, 6, null),
@@ -144,7 +144,7 @@ export const SEED_SITES: SiteRecord[] = [
   mk("https://zoomimoveis.com", ["Domumpremiumbrasil@gmail.com"], 1, 4, null, 2, null),
   mk("https://vitalclin.com", ["danielmoreira91@gmail.com"], 3, 20, 7, 18, null),
   mk("https://mestredodigital.com.br", ["10reaisem20mil@gmail.com"], 1, 5, null, 1, null),
-  mk("https://loyello.com.br", ["Royalprestige50@gmail.com"], 1, 1, null, 0, null),
+  mk("https://loyello.com.br", ["royalprestige50@gmail.com"], 1, 1, null, 0, null),
   mk("https://veloxtel.com.br", ["canalbocarose@gmail.com"], 1, 1, null, 0, null),
   mk("https://testedevelocidade.org", ["vagasetrabalhos@gmail.com"], 5, 21, 38, 21, null),
   mk("https://extrairtextodevideo.com", ["itfashion.com.br@gmail.com"], 1, 1, null, 0, null),
@@ -154,9 +154,9 @@ export const SEED_SITES: SiteRecord[] = [
   mk("https://trustallamerica.com", ["multitraderoficial@gmail.com"], 1, 15, 1, 8, null),
   mk("https://backlinksbrasil.com", ["corretor.seguros1@gmail.com"], 1, 23, 8, 135, null),
   mk("https://duiwin.pro", [], 37, 39, 11, 344, null),
-  mk("https://mydash.online", [], 1, 12, 57, 5, null),
+  mk("https://mydash.online", ["canalbocarose@gmail.com"], 1, 12, 57, 5, null),
 ];
 
 // Bump this whenever SEED_SITES is updated so the dashboard merges the new
 // metrics/emails into existing localStorage data (preserving user checklist/notes).
-export const SEED_VERSION = 4;
+export const SEED_VERSION = 5;

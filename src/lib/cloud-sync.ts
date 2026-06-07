@@ -27,6 +27,15 @@ export type Snapshot = {
   savedAt: string;
 };
 
+function entriesMatchLocal(entries: Record<string, unknown>): boolean {
+  const current = collectLocal();
+  const keys = new Set([...Object.keys(current), ...Object.keys(entries)]);
+  for (const key of keys) {
+    if (JSON.stringify(current[key]) !== JSON.stringify(entries[key])) return false;
+  }
+  return true;
+}
+
 function collectLocal(): Record<string, unknown> {
   const out: Record<string, unknown> = {};
   for (let i = 0; i < localStorage.length; i++) {
@@ -67,16 +76,23 @@ export async function saveSnapshot(
     entries: { ...collectLocal(), ...overrides },
     savedAt: new Date().toISOString(),
   };
-  const { error } = await supabase
+  const { data, error } = await supabase
     .from("app_state")
-    .upsert({ id: STATE_ID, data: snapshot as unknown as never }, { onConflict: "id" });
+    .upsert({ id: STATE_ID, data: snapshot as unknown as never }, { onConflict: "id" })
+    .select("data")
+    .maybeSingle();
   if (error) return { ok: false, error: error.message };
+  const persisted = data?.data as Snapshot | null | undefined;
+  if (persisted?.savedAt !== snapshot.savedAt) {
+    return { ok: false, error: "A nuvem não confirmou o snapshot salvo. Tente entrar novamente e salvar outra vez." };
+  }
   return { ok: true, savedAt: snapshot.savedAt };
 }
 
 export async function loadSnapshot(): Promise<{
   ok: boolean;
   applied: boolean;
+  changed?: boolean;
   error?: string;
   savedAt?: string;
 }> {
@@ -90,8 +106,9 @@ export async function loadSnapshot(): Promise<{
   if (!snap || !snap.entries || Object.keys(snap.entries).length === 0) {
     return { ok: true, applied: false };
   }
+  const changed = !entriesMatchLocal(snap.entries);
   applyLocal(snap.entries);
-  return { ok: true, applied: true, savedAt: snap.savedAt };
+  return { ok: true, applied: true, changed, savedAt: snap.savedAt };
 }
 
 export async function getRemoteUpdatedAt(): Promise<string | null> {
