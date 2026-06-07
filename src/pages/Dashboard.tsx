@@ -42,13 +42,12 @@ function DashboardInner({ logout }: { logout: () => void }) {
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      const lastAppliedSavedAt = sessionStorage.getItem("cloud.hydrated.savedAt");
       const res = await loadSnapshot();
       if (cancelled) return;
       if (res.applied) {
         setLastSaved(res.savedAt ?? null);
         rememberCloudSavedAt(res.savedAt);
-        if (res.savedAt !== lastAppliedSavedAt) {
+        if (res.changed) {
           // Reload so useLocalStorage hooks pick up fresh values from cloud.
           window.location.reload();
           return;
@@ -156,6 +155,7 @@ function DashboardInner({ logout }: { logout: () => void }) {
     setSaving(false);
     if (res.ok) {
       setLastSaved(res.savedAt ?? new Date().toISOString());
+      rememberCloudSavedAt(res.savedAt);
       toast.success("Tudo salvo na nuvem", { description: "Sites, métricas, checklists e prompts." });
     } else {
       toast.error("Erro ao salvar", { description: res.error });
@@ -214,6 +214,7 @@ function DashboardInner({ logout }: { logout: () => void }) {
     const res = await saveSnapshot({ "sites.v1": nextSites });
     if (res.ok) {
       setLastSaved(res.savedAt ?? new Date().toISOString());
+      rememberCloudSavedAt(res.savedAt);
       setAutoStatus("saved");
       toast.success("Site salvo na nuvem", { description: s.domain });
       window.setTimeout(() => setAutoStatus((cur) => (cur === "saved" ? "idle" : cur)), 2000);
@@ -223,13 +224,40 @@ function DashboardInner({ logout }: { logout: () => void }) {
     }
   };
 
-  const remove = (id: string) => {
+  const remove = async (id: string) => {
     if (!confirm("Excluir este site?")) return;
-    setSites((prev) => prev.filter((s) => s.id !== id));
+    let nextSites: SiteRecord[] = [];
+    setSites((prev) => {
+      nextSites = prev.filter((s) => s.id !== id);
+      return nextSites;
+    });
+    const res = await saveSnapshot({ "sites.v1": nextSites });
+    if (res.ok) {
+      setLastSaved(res.savedAt ?? new Date().toISOString());
+      rememberCloudSavedAt(res.savedAt);
+      toast.success("Site excluído e salvo na nuvem");
+    } else {
+      toast.error("Erro ao salvar exclusão", { description: res.error });
+    }
   };
 
-  const toggle = (id: string, key: ChecklistKey, v: boolean) => {
-    setSites((prev) => prev.map((s) => (s.id === id ? { ...s, checklist: { ...s.checklist, [key]: v } } : s)));
+  const toggle = async (id: string, key: ChecklistKey, v: boolean) => {
+    let nextSites: SiteRecord[] = [];
+    setSites((prev) => {
+      nextSites = prev.map((s) => (s.id === id ? { ...s, checklist: { ...s.checklist, [key]: v } } : s));
+      return nextSites;
+    });
+    setAutoStatus("saving");
+    const res = await saveSnapshot({ "sites.v1": nextSites });
+    if (res.ok) {
+      setLastSaved(res.savedAt ?? new Date().toISOString());
+      rememberCloudSavedAt(res.savedAt);
+      setAutoStatus("saved");
+      window.setTimeout(() => setAutoStatus((cur) => (cur === "saved" ? "idle" : cur)), 2000);
+    } else {
+      setAutoStatus("error");
+      toast.error("Erro ao salvar marcação", { description: res.error });
+    }
   };
 
   if (loadingCloud) {
