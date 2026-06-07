@@ -80,6 +80,7 @@ function DashboardInner({ logout }: { logout: () => void }) {
       autoSavingRef.current = false;
       if (res.ok) {
         setLastSaved(res.savedAt ?? new Date().toISOString());
+        rememberCloudSavedAt(res.savedAt);
         setAutoStatus("saved");
         window.setTimeout(() => setAutoStatus((s) => (s === "saved" ? "idle" : s)), 2000);
       } else {
@@ -130,7 +131,7 @@ function DashboardInner({ logout }: { logout: () => void }) {
         if (!existing) return seed;
         return {
           ...seed,
-          emails: existing.emails ?? seed.emails,
+          emails: existing.emails?.length ? existing.emails : seed.emails,
           notes: existing.notes ?? seed.notes,
           da: existing.da ?? seed.da,
           pa: existing.pa ?? seed.pa,
