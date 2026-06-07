@@ -33,29 +33,19 @@ function writeLS<T>(key: string, value: T) {
  * - Cross-tab sync via the `storage` event.
  */
 export function useLocalStorage<T>(key: string, initial: T): [T, (v: T | ((p: T) => T)) => void] {
-  const [value, setValue] = useState<T>(initial);
+  const [value, setValue] = useState<T>(() => readLS(key, initial));
   const valueRef = useRef(value);
-  const hydratedRef = useRef(false);
   const keyRef = useRef(key);
 
   // Hydrate on mount / when key changes.
   useEffect(() => {
     keyRef.current = key;
-    hydratedRef.current = false;
     const stored = readLS<T | undefined>(key, undefined as unknown as T);
     const next = stored !== undefined ? stored : initial;
     valueRef.current = next;
     setValue(next);
-    hydratedRef.current = true;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [key]);
-
-  // Persist whenever value changes (after hydration).
-  useEffect(() => {
-    if (!hydratedRef.current) return;
-    valueRef.current = value;
-    writeLS(key, value);
-  }, [key, value]);
 
   // Cross-tab sync.
   useEffect(() => {
@@ -79,7 +69,7 @@ export function useLocalStorage<T>(key: string, initial: T): [T, (v: T | ((p: T)
       const next = typeof v === "function" ? (v as (p: T) => T)(valueRef.current) : v;
       valueRef.current = next;
       // Write synchronously so cloud sync/manual saves never read stale data.
-      if (hydratedRef.current) writeLS(key, next);
+      writeLS(key, next);
       setValue(next);
     },
     [key],
