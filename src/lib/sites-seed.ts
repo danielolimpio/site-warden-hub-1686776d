@@ -1,4 +1,14 @@
-export type ChecklistKey = "gsc" | "ga" | "pwa" | "seo" | "adsense";
+export type ChecklistKey =
+  | "gsc"
+  | "ga"
+  | "pwa"
+  | "seo"
+  | "adsense"
+  | "ssg"
+  | "top"
+  | "bl"
+  | "img"
+  | "mob";
 
 export interface SiteRecord {
   id: string;
@@ -16,7 +26,7 @@ export interface SiteRecord {
 }
 
 const c = (gsc=false, ga=false, pwa=false, seo=false, adsense=false) =>
-  ({ gsc, ga, pwa, seo, adsense });
+  ({ gsc, ga, pwa, seo, adsense, ssg: false, top: false, bl: false, img: false, mob: false });
 
 const DOMAIN_AGES: Record<string, string> = {
   "agoranabahia.com.br":"4 meses","fileconvert.cloud":"<1 mês","polartensor.trade":"1 mês",
@@ -159,4 +169,4 @@ export const SEED_SITES: SiteRecord[] = [
 
 // Bump this whenever SEED_SITES is updated so the dashboard merges the new
 // metrics/emails into existing localStorage data (preserving user checklist/notes).
-export const SEED_VERSION = 5;
+export const SEED_VERSION = 6;

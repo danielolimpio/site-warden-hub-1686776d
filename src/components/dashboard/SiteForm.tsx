@@ -16,7 +16,7 @@ interface Props {
 const empty: SiteRecord = {
   id: "", url: "", domain: "", emails: [], notes: "",
   da: null, pa: null, ss: null, backlinks: null, domainAge: null, traffic: null,
-  checklist: { gsc: false, ga: false, pwa: false, seo: false, adsense: false },
+  checklist: { gsc: false, ga: false, pwa: false, seo: false, adsense: false, ssg: false, top: false, bl: false, img: false, mob: false },
 };
 
 export function SiteForm({ open, onOpenChange, initial, onSave }: Props) {
