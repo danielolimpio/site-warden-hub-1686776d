@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Copy, Plus, Trash2, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -24,21 +24,15 @@ export function PromptManager({ siteId, siteDomain }: { siteId?: string | null; 
   const [globalStore, setGlobalStore] = useLocalStorage<Store>(`prompts.v2.__global__`, initialStore);
   const [active, setActive] = useState<PromptCategory>("PWA");
 
-  // If no site is selected, force a global category active
-  useEffect(() => {
-    if (!siteId && !isGlobal(active)) setActive("PWA");
-  }, [siteId, active]);
-
   const activeIsGlobal = isGlobal(active);
   const store = activeIsGlobal ? globalStore : siteStore;
   const setStore = activeIsGlobal ? setGlobalStore : setSiteStore;
   const blocks = store[active] ?? [];
 
   const countOf = (c: PromptCategory) =>
-    (isGlobal(c) ? globalStore[c]?.length : siteId ? siteStore[c]?.length : 0) ?? 0;
+    (isGlobal(c) ? globalStore[c]?.length : siteStore[c]?.length) ?? 0;
 
   const addBlock = () => {
-    if (!activeIsGlobal && !siteId) return;
     const nb: Block = { id: crypto.randomUUID(), title: "Novo bloco", code: "" };
     setStore({ ...store, [active]: [nb, ...blocks] });
   };
@@ -67,8 +61,7 @@ export function PromptManager({ siteId, siteDomain }: { siteId?: string | null; 
             cat={c}
             active={active === c}
             count={countOf(c)}
-            disabled={!siteId}
-            onClick={() => siteId && setActive(c)}
+            onClick={() => setActive(c)}
           />
         ))}
       </nav>
@@ -94,7 +87,6 @@ export function PromptManager({ siteId, siteDomain }: { siteId?: string | null; 
             onClick={addBlock}
             size="sm"
             className="shrink-0 h-8 px-2"
-            disabled={!activeIsGlobal && !siteId}
           >
             <Plus className="h-4 w-4 mr-1" />Novo
           </Button>
