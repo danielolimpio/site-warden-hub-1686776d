@@ -4,7 +4,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { toast } from "sonner";
 import type { ChecklistKey, SiteRecord } from "@/lib/sites-seed";
-import { GSCLogo, GALogo, PWALogo, SEOLogo, AdsenseLogo } from "./BrandLogos";
+import { GSCLogo, GALogo, PWALogo, SEOLogo, AdsenseLogo, SSGLogo, TopLogo, BLLogo, ImgLogo, MobLogo } from "./BrandLogos";
 
 const METRICS: { key: keyof SiteRecord; label: string; full: string; format?: (v: unknown) => string }[] = [
   { key: "da", label: "DA", full: "Domain Authority" },
@@ -21,6 +21,14 @@ const CHECKS: { key: ChecklistKey; label: string; Logo: typeof GSCLogo }[] = [
   { key: "pwa", label: "PWA", Logo: PWALogo },
   { key: "seo", label: "SEO", Logo: SEOLogo },
   { key: "adsense", label: "AdSense", Logo: AdsenseLogo },
+];
+
+const CHECKS_EXTRA: { key: ChecklistKey; label: string; full: string; Logo: typeof GSCLogo }[] = [
+  { key: "ssg", label: "SSG", full: "Transformar o site em páginas HTML para indexação", Logo: SSGLogo },
+  { key: "top", label: "TOP", full: "Configurar o Scroll Top", Logo: TopLogo },
+  { key: "bl", label: "BL", full: "Criar Backlinks", Logo: BLLogo },
+  { key: "img", label: "IMG", full: "Otimizar imagens", Logo: ImgLogo },
+  { key: "mob", label: "MOB", full: "Verificar responsividade mobile", Logo: MobLogo },
 ];
 
 interface Props {
@@ -163,6 +171,34 @@ export function SiteCard({ site, selected = false, onSelect, onEdit, onDelete, o
                   </label>
                 </TooltipTrigger>
                 <TooltipContent side="bottom"><span className="text-xs">{label} {checked ? "✓ configurado" : "— pendente"}</span></TooltipContent>
+              </Tooltip>
+            );
+          })}
+        </div>
+
+        <div className="flex items-center justify-between gap-2 pt-3 mt-3 border-t border-border/60">
+          {CHECKS_EXTRA.map(({ key, label, full, Logo }) => {
+            const checked = site.checklist[key];
+            return (
+              <Tooltip key={key}>
+                <TooltipTrigger asChild>
+                  <label
+                    className={`flex flex-col items-center gap-1 cursor-pointer select-none transition ${
+                      checked ? "opacity-100" : "opacity-40 hover:opacity-70"
+                    }`}
+                  >
+                    <Logo className="h-5 w-5" />
+                    <div className="flex items-center gap-1">
+                      <Checkbox
+                        checked={checked}
+                        onCheckedChange={(v) => onToggle(key, Boolean(v))}
+                        className="h-3 w-3"
+                      />
+                      <span className="text-[10px] font-medium text-muted-foreground">{label}</span>
+                    </div>
+                  </label>
+                </TooltipTrigger>
+                <TooltipContent side="bottom"><span className="text-xs">{full} {checked ? "✓" : "— pendente"}</span></TooltipContent>
               </Tooltip>
             );
           })}
