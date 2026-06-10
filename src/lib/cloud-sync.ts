@@ -55,7 +55,9 @@ function readSites(value: unknown): SiteRecord[] | null {
 function mergeChecklist(seed?: SiteRecord, local?: SiteRecord, remote?: SiteRecord) {
   const checklist = { ...(seed?.checklist ?? {}) } as Record<ChecklistKey, boolean>;
   for (const key of CHECKLIST_KEYS) {
-    checklist[key] = Boolean(seed?.checklist?.[key] || local?.checklist?.[key] || remote?.checklist?.[key]);
+    checklist[key] = Boolean(
+      seed?.checklist?.[key] || local?.checklist?.[key] || remote?.checklist?.[key],
+    );
   }
   return checklist;
 }
@@ -67,8 +69,16 @@ function mergeSite(local?: SiteRecord, remote?: SiteRecord): SiteRecord {
     ...base,
     ...local,
     ...remote,
-    emails: remote?.emails?.length ? remote.emails : local?.emails?.length ? local.emails : base.emails ?? [],
-    notes: remote?.notes?.trim() ? remote.notes : local?.notes?.trim() ? local.notes : base.notes ?? "",
+    emails: remote?.emails?.length
+      ? remote.emails
+      : local?.emails?.length
+        ? local.emails
+        : (base.emails ?? []),
+    notes: remote?.notes?.trim()
+      ? remote.notes
+      : local?.notes?.trim()
+        ? local.notes
+        : (base.notes ?? ""),
     da: remote?.da ?? local?.da ?? base.da ?? null,
     pa: remote?.pa ?? local?.pa ?? base.pa ?? null,
     ss: remote?.ss ?? local?.ss ?? base.ss ?? null,
@@ -94,7 +104,10 @@ function mergeSites(localValue: unknown, remoteValue: unknown): SiteRecord[] | u
     .filter((site) => site.id);
 }
 
-function mergeEntries(local: Record<string, unknown>, remote: Record<string, unknown>): Record<string, unknown> {
+function mergeEntries(
+  local: Record<string, unknown>,
+  remote: Record<string, unknown>,
+): Record<string, unknown> {
   const out = { ...local, ...remote };
   const sites = mergeSites(local["sites.v1"], remote["sites.v1"]);
   if (sites) out["sites.v1"] = sites;
@@ -124,7 +137,11 @@ function applyLocal(entries: Record<string, unknown>) {
   for (let i = 0; i < localStorage.length; i++) {
     const key = localStorage.key(i);
     if (!key) continue;
-    if (SYNC_EXACT.includes(key) || LEGACY_SYNC_EXACT.includes(key) || SYNC_PREFIXES.some((p) => key.startsWith(p))) {
+    if (
+      SYNC_EXACT.includes(key) ||
+      LEGACY_SYNC_EXACT.includes(key) ||
+      SYNC_PREFIXES.some((p) => key.startsWith(p))
+    ) {
       toRemove.push(key);
     }
   }
@@ -135,11 +152,7 @@ function applyLocal(entries: Record<string, unknown>) {
 }
 
 async function getRemoteEntries(): Promise<Record<string, unknown>> {
-  const { data } = await supabase
-    .from("app_state")
-    .select("data")
-    .eq("id", STATE_ID)
-    .maybeSingle();
+  const { data } = await supabase.from("app_state").select("data").eq("id", STATE_ID).maybeSingle();
   const snap = data?.data as Snapshot | null | undefined;
   return filterSyncedEntries(snap?.entries ?? {});
 }
@@ -148,7 +161,9 @@ export async function saveSnapshot(
   overrides: Record<string, unknown> = {},
 ): Promise<{ ok: boolean; error?: string; savedAt?: string }> {
   const localEntries = { ...collectLocal(), ...overrides };
-  const remoteEntries = Object.prototype.hasOwnProperty.call(overrides, "sites.v1") ? {} : await getRemoteEntries();
+  const remoteEntries = Object.prototype.hasOwnProperty.call(overrides, "sites.v1")
+    ? {}
+    : await getRemoteEntries();
   const snapshot: Snapshot = {
     version: 1,
     entries: mergeEntries(remoteEntries, localEntries),
@@ -162,7 +177,10 @@ export async function saveSnapshot(
   if (error) return { ok: false, error: error.message };
   const persisted = data?.data as Snapshot | null | undefined;
   if (persisted?.savedAt !== snapshot.savedAt) {
-    return { ok: false, error: "A nuvem não confirmou o snapshot salvo. Tente entrar novamente e salvar outra vez." };
+    return {
+      ok: false,
+      error: "A nuvem não confirmou o snapshot salvo. Tente entrar novamente e salvar outra vez.",
+    };
   }
   return { ok: true, savedAt: snapshot.savedAt };
 }
