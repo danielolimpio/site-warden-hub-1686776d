@@ -8,7 +8,6 @@ import { SEED_SITES, type ChecklistKey, type SiteRecord } from "@/lib/sites-seed
  *
  * Keys synced (every relevant localStorage entry):
  *  - sites.v1                 → list of sites + metrics + checklist + notes
- *  - sites.seedVersion        → seed merge version
  *  - prompts.v2.__global__    → global prompt snippets
  *  - prompts.v2.<siteId>      → per-site prompt snippets
  */
@@ -152,7 +151,7 @@ export async function saveSnapshot(
   const remoteEntries = Object.prototype.hasOwnProperty.call(overrides, "sites.v1") ? {} : await getRemoteEntries();
   const snapshot: Snapshot = {
     version: 1,
-    entries: mergeEntries(localEntries, remoteEntries),
+    entries: mergeEntries(remoteEntries, localEntries),
     savedAt: new Date().toISOString(),
   };
   const { data, error } = await supabase
