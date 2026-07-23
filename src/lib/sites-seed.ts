@@ -152,7 +152,7 @@ export const SEED_SITES: SiteRecord[] = [
   mk("https://royalq.trade", ["alexandriadobrasil@gmail.com"], 2, 19, 19, 16, null, "Robô de trading de criptomoedas, investimentos"),
   mk("https://contadordecalorias.org", ["dreamsgoldbrazil@gmail.com"], 1, 1, null, 0, null, "Dieta, emagrecimento, saúde, nutrição"),
   mk("https://simuladodetrangratis.com", ["nemawashidobrasil@gmail.com"], 10, 14, null, 30, null, "Simulado Detran, educação para trânsito, CNH"),
-  mk("https://visinova.com.br", ["fr.promotoradobrasil@gmail.com"], 1, 1, null, 0, null, "Um clube. Sete soluções: Economia de Energia, Clube de Descontos, Telemedicina, convênio Saúde, Convênio Farmácias, Seguro de Vida e Plano Odonto"),
+  mk("https://visinova.com.br", ["fr.promotoradobrasil@gmail.com"], 1, 1, null, 0, null, "Clube de benefícios: energia, saúde, farmácia e odonto"),
   mk("https://zoomimoveis.com", ["Domumpremiumbrasil@gmail.com"], 1, 4, null, 2, null, "Portal de Imóveis, corretora de imóveis, mercado imobiliário"),
   mk("https://vitalclin.com", ["danielmoreira91@gmail.com"], 3, 20, 7, 18, null, "Saúde, clínica médica, bem-estar, tratamentos"),
   mk("https://mestredodigital.com.br", ["10reaisem20mil@gmail.com"], 1, 5, null, 1, null, ""),
