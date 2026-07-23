@@ -182,6 +182,7 @@ function DashboardInner({ logout }: { logout: () => void }) {
       (s) =>
         s.domain.toLowerCase().includes(q) ||
         s.emails.some((e) => e.toLowerCase().includes(q)) ||
+        (s.description ?? "").toLowerCase().includes(q) ||
         (s.notes ?? "").toLowerCase().includes(q),
     );
   }, [sites, query]);
