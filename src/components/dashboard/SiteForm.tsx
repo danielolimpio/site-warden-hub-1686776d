@@ -14,7 +14,7 @@ interface Props {
 }
 
 const empty: SiteRecord = {
-  id: "", url: "", domain: "", emails: [], notes: "",
+  id: "", url: "", domain: "", description: "", emails: [], notes: "",
   da: null, pa: null, ss: null, backlinks: null, domainAge: null, traffic: null,
   checklist: { gsc: false, ga: false, pwa: false, seo: false, adsense: false, ssg: false, top: false, bl: false, img: false, mob: false },
 };
@@ -57,6 +57,11 @@ export function SiteForm({ open, onOpenChange, initial, onSave }: Props) {
           <div className="grid gap-2">
             <Label htmlFor="url">URL</Label>
             <Input id="url" placeholder="https://exemplo.com" value={form.url} onChange={(e) => set("url", e.target.value)} />
+          </div>
+
+          <div className="grid gap-2">
+            <Label htmlFor="description">Descrição / nicho</Label>
+            <Input id="description" value={form.description} onChange={(e) => set("description", e.target.value)} placeholder="Breve resumo do site" />
           </div>
 
           <div className="grid gap-2">

@@ -79,6 +79,11 @@ function mergeSite(local?: SiteRecord, remote?: SiteRecord): SiteRecord {
       : local?.notes?.trim()
         ? local.notes
         : (base.notes ?? ""),
+    description: remote?.description?.trim()
+      ? remote.description
+      : local?.description?.trim()
+        ? local.description
+        : (base.description ?? ""),
     da: remote?.da ?? local?.da ?? base.da ?? null,
     pa: remote?.pa ?? local?.pa ?? base.pa ?? null,
     ss: remote?.ss ?? local?.ss ?? base.ss ?? null,

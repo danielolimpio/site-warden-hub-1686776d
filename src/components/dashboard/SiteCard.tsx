@@ -96,6 +96,9 @@ export function SiteCard({ site, selected = false, onSelect, onEdit, onDelete, o
                 <span className="truncate">{site.domain}</span>
                 <ExternalLink className="h-3.5 w-3.5 opacity-60 shrink-0" />
               </a>
+              {site.description && (
+                <p className="text-[10px] text-muted-foreground mt-0.5 leading-snug line-clamp-2">{site.description}</p>
+              )}
               {site.notes && (
                 <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">{site.notes}</p>
               )}

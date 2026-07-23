@@ -133,6 +133,7 @@ function DashboardInner({ logout }: { logout: () => void }) {
         return {
           ...seed,
           emails: existing.emails?.length ? existing.emails : seed.emails,
+          description: existing.description?.trim() ? existing.description : seed.description,
           notes: existing.notes ?? seed.notes,
           da: existing.da ?? seed.da,
           pa: existing.pa ?? seed.pa,
@@ -181,6 +182,7 @@ function DashboardInner({ logout }: { logout: () => void }) {
       (s) =>
         s.domain.toLowerCase().includes(q) ||
         s.emails.some((e) => e.toLowerCase().includes(q)) ||
+        (s.description ?? "").toLowerCase().includes(q) ||
         (s.notes ?? "").toLowerCase().includes(q),
     );
   }, [sites, query]);
