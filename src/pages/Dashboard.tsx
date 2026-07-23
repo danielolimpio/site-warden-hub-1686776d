@@ -133,6 +133,7 @@ function DashboardInner({ logout }: { logout: () => void }) {
         return {
           ...seed,
           emails: existing.emails?.length ? existing.emails : seed.emails,
+          description: existing.description?.trim() ? existing.description : seed.description,
           notes: existing.notes ?? seed.notes,
           da: existing.da ?? seed.da,
           pa: existing.pa ?? seed.pa,
