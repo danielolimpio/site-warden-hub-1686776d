@@ -6,15 +6,23 @@ import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { useLocalStorage } from "@/lib/use-storage";
 
-export type PromptCategory = "PWA" | "FTP_HOST" | "ARTIGO" | "SCROLL";
-const CATS: PromptCategory[] = ["PWA", "SCROLL", "FTP_HOST", "ARTIGO"];
-const GLOBAL_CATS: PromptCategory[] = ["PWA", "SCROLL"];
-const isGlobal = (c: PromptCategory) => GLOBAL_CATS.includes(c);
+export type PromptCategory =
+  | "PWA"
+  | "SCROLL"
+  | "GLOSSARIO_PT"
+  | "GLOSSARIO_EN"
+  | "ARTIGO";
+type VisibleCategory = "PWA" | "SCROLL" | "GLOSSARIO" | "ARTIGO";
+const GLOBAL_VIS: VisibleCategory[] = ["PWA", "SCROLL", "GLOSSARIO"];
+const SITE_VIS: VisibleCategory[] = ["ARTIGO"];
+const isGlobalVis = (c: VisibleCategory) => GLOBAL_VIS.includes(c);
+type GlossLang = "PT" | "EN";
+const glossKey = (l: GlossLang): PromptCategory => (l === "PT" ? "GLOSSARIO_PT" : "GLOSSARIO_EN");
 
 interface Block { id: string; title: string; code: string }
-type Store = Record<PromptCategory, Block[]>;
+type Store = Partial<Record<PromptCategory, Block[]>>;
 
-const initialStore: Store = { PWA: [], FTP_HOST: [], ARTIGO: [], SCROLL: [] };
+const initialStore: Store = { PWA: [], ARTIGO: [], SCROLL: [], GLOSSARIO_PT: [], GLOSSARIO_EN: [] };
 
 export function PromptManager({ siteId, siteDomain }: { siteId?: string | null; siteDomain?: string | null }) {
   const [siteStore, setSiteStore] = useLocalStorage<Store>(
@@ -22,40 +30,46 @@ export function PromptManager({ siteId, siteDomain }: { siteId?: string | null; 
     initialStore,
   );
   const [globalStore, setGlobalStore] = useLocalStorage<Store>(`prompts.v2.__global__`, initialStore);
-  const [active, setActive] = useState<PromptCategory>("PWA");
+  const [active, setActive] = useState<VisibleCategory>("PWA");
+  const [glossLang, setGlossLang] = useState<GlossLang>("PT");
 
-  const activeIsGlobal = isGlobal(active);
+  const activeIsGlobal = isGlobalVis(active);
+  const effectiveKey: PromptCategory =
+    active === "GLOSSARIO" ? glossKey(glossLang) : (active as PromptCategory);
   const store = activeIsGlobal ? globalStore : siteStore;
   const setStore = activeIsGlobal ? setGlobalStore : setSiteStore;
-  const blocks = store[active] ?? [];
+  const blocks = store[effectiveKey] ?? [];
 
-  const countOf = (c: PromptCategory) =>
-    (isGlobal(c) ? globalStore[c]?.length : siteStore[c]?.length) ?? 0;
+  const countOf = (c: VisibleCategory) => {
+    const src = isGlobalVis(c) ? globalStore : siteStore;
+    if (c === "GLOSSARIO") return (src.GLOSSARIO_PT?.length ?? 0) + (src.GLOSSARIO_EN?.length ?? 0);
+    return src[c as PromptCategory]?.length ?? 0;
+  };
 
   const addBlock = () => {
     const nb: Block = { id: crypto.randomUUID(), title: "Novo bloco", code: "" };
-    setStore({ ...store, [active]: [nb, ...blocks] });
+    setStore({ ...store, [effectiveKey]: [nb, ...blocks] });
   };
 
   const updateBlock = (id: string, patch: Partial<Block>) => {
-    setStore({ ...store, [active]: blocks.map((b) => (b.id === id ? { ...b, ...patch } : b)) });
+    setStore({ ...store, [effectiveKey]: blocks.map((b) => (b.id === id ? { ...b, ...patch } : b)) });
   };
 
   const removeBlock = (id: string) => {
-    setStore({ ...store, [active]: blocks.filter((b) => b.id !== id) });
+    setStore({ ...store, [effectiveKey]: blocks.filter((b) => b.id !== id) });
   };
 
   return (
     <div className="flex flex-col gap-4">
       <nav className="space-y-1">
         <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1 px-2">Genéricos (todos os sites)</p>
-        {GLOBAL_CATS.map((c) => (
+        {GLOBAL_VIS.map((c) => (
           <CategoryButton key={c} cat={c} active={active === c} count={countOf(c)} global onClick={() => setActive(c)} />
         ))}
         <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1 px-2 pt-3">
           Exclusivos {siteDomain ? `de ${siteDomain}` : "(selecione um site)"}
         </p>
-        {CATS.filter((c) => !isGlobal(c)).map((c) => (
+        {SITE_VIS.map((c) => (
           <CategoryButton
             key={c}
             cat={c}
@@ -92,9 +106,30 @@ export function PromptManager({ siteId, siteDomain }: { siteId?: string | null; 
           </Button>
         </div>
 
+        {active === "GLOSSARIO" && (
+          <div className="flex gap-1 mb-3 p-1 bg-secondary/50 rounded-lg w-fit">
+            {(["PT", "EN"] as GlossLang[]).map((l) => (
+              <button
+                key={l}
+                onClick={() => setGlossLang(l)}
+                className={`px-3 py-1 text-xs font-medium rounded-md transition ${
+                  glossLang === l
+                    ? "bg-card shadow-sm text-foreground"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                {l === "PT" ? "Português" : "Inglês"}
+                <span className="ml-1.5 text-[10px] opacity-70">
+                  {(globalStore[glossKey(l)]?.length ?? 0)}
+                </span>
+              </button>
+            ))}
+          </div>
+        )}
+
         {blocks.length === 0 ? (
           <div className="rounded-lg border border-dashed border-border bg-card/40 p-6 text-center text-xs text-muted-foreground">
-            Nenhum bloco em <strong>{active}</strong>. Clique em <em>Novo</em> para começar.
+            Nenhum bloco em <strong>{active === "GLOSSARIO" ? `Glossário ${glossLang}` : active}</strong>. Clique em <em>Novo</em> para começar.
           </div>
         ) : (
           <div className="space-y-3">
@@ -108,7 +143,8 @@ export function PromptManager({ siteId, siteDomain }: { siteId?: string | null; 
   );
 }
 
-function CategoryButton({ cat, active, count, global: isGlobalCat, disabled, onClick }: { cat: PromptCategory; active: boolean; count: number; global?: boolean; disabled?: boolean; onClick: () => void }) {
+function CategoryButton({ cat, active, count, global: isGlobalCat, disabled, onClick }: { cat: VisibleCategory; active: boolean; count: number; global?: boolean; disabled?: boolean; onClick: () => void }) {
+  const label = cat === "GLOSSARIO" ? "Glossário" : cat;
   return (
           <button
             onClick={onClick}
@@ -121,7 +157,7 @@ function CategoryButton({ cat, active, count, global: isGlobalCat, disabled, onC
             }`}
           >
             <span className="flex items-center gap-2">
-              {cat}
+              {label}
               {isGlobalCat && (
                 <span className={`text-[9px] uppercase tracking-wider px-1 py-0.5 rounded ${active ? "bg-primary-foreground/20" : "bg-[oklch(0.92_0.08_150)] text-[oklch(0.35_0.12_150)]"}`}>
                   global
