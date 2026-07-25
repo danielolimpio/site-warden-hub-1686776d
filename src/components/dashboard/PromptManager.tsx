@@ -11,9 +11,10 @@ export type PromptCategory =
   | "SCROLL"
   | "GLOSSARIO_PT"
   | "GLOSSARIO_EN"
+  | "IMG_QUEBRADA"
   | "ARTIGO";
-type VisibleCategory = "PWA" | "SCROLL" | "GLOSSARIO" | "ARTIGO";
-const GLOBAL_VIS: VisibleCategory[] = ["PWA", "SCROLL", "GLOSSARIO"];
+type VisibleCategory = "PWA" | "SCROLL" | "GLOSSARIO" | "IMG_QUEBRADA" | "ARTIGO";
+const GLOBAL_VIS: VisibleCategory[] = ["PWA", "SCROLL", "GLOSSARIO", "IMG_QUEBRADA"];
 const SITE_VIS: VisibleCategory[] = ["ARTIGO"];
 const isGlobalVis = (c: VisibleCategory) => GLOBAL_VIS.includes(c);
 type GlossLang = "PT" | "EN";
@@ -22,7 +23,9 @@ const glossKey = (l: GlossLang): PromptCategory => (l === "PT" ? "GLOSSARIO_PT" 
 interface Block { id: string; title: string; code: string }
 type Store = Partial<Record<PromptCategory, Block[]>>;
 
-const initialStore: Store = { PWA: [], ARTIGO: [], SCROLL: [], GLOSSARIO_PT: [], GLOSSARIO_EN: [] };
+const initialStore: Store = { PWA: [], ARTIGO: [], SCROLL: [], GLOSSARIO_PT: [], GLOSSARIO_EN: [], IMG_QUEBRADA: [] };
+
+const labelOf = (c: VisibleCategory) => (c === "IMG_QUEBRADA" ? "IMG QUEBRADA" : c);
 
 export function PromptManager({ siteId, siteDomain }: { siteId?: string | null; siteDomain?: string | null }) {
   const [siteStore, setSiteStore] = useLocalStorage<Store>(
@@ -84,7 +87,7 @@ export function PromptManager({ siteId, siteDomain }: { siteId?: string | null; 
         <div className="flex items-center justify-between mb-3 gap-2">
           <div className="min-w-0">
             <h2 className="text-base font-semibold leading-tight flex items-center gap-2">
-              {active}
+              {labelOf(active)}
               <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded ${activeIsGlobal ? "bg-[oklch(0.92_0.08_150)] text-[oklch(0.35_0.12_150)]" : "bg-secondary text-muted-foreground"}`}>
                 {activeIsGlobal ? "Genérico" : "Exclusivo"}
               </span>
@@ -129,7 +132,7 @@ export function PromptManager({ siteId, siteDomain }: { siteId?: string | null; 
 
         {blocks.length === 0 ? (
           <div className="rounded-lg border border-dashed border-border bg-card/40 p-6 text-center text-xs text-muted-foreground">
-            Nenhum bloco em <strong>{active === "GLOSSARIO" ? `Glossário ${glossLang}` : active}</strong>. Clique em <em>Novo</em> para começar.
+            Nenhum bloco em <strong>{active === "GLOSSARIO" ? `GLOSSÁRIO ${glossLang}` : labelOf(active)}</strong>. Clique em <em>Novo</em> para começar.
           </div>
         ) : (
           <div className="space-y-3">
@@ -144,7 +147,7 @@ export function PromptManager({ siteId, siteDomain }: { siteId?: string | null; 
 }
 
 function CategoryButton({ cat, active, count, global: isGlobalCat, disabled, onClick }: { cat: VisibleCategory; active: boolean; count: number; global?: boolean; disabled?: boolean; onClick: () => void }) {
-  const label = cat === "GLOSSARIO" ? "Glossário" : cat;
+  const label = cat === "GLOSSARIO" ? "GLOSSÁRIO" : cat === "IMG_QUEBRADA" ? "IMG QUEBRADA" : cat;
   return (
           <button
             onClick={onClick}
