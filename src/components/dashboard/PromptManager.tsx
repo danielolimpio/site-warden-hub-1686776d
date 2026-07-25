@@ -25,7 +25,8 @@ type Store = Partial<Record<PromptCategory, Block[]>>;
 
 const initialStore: Store = { PWA: [], ARTIGO: [], SCROLL: [], GLOSSARIO_PT: [], GLOSSARIO_EN: [], IMG_QUEBRADA: [] };
 
-const labelOf = (c: VisibleCategory) => (c === "IMG_QUEBRADA" ? "IMG QUEBRADA" : c);
+const labelOf = (c: VisibleCategory) =>
+  c === "IMG_QUEBRADA" ? "IMG QUEBRADA" : c === "GLOSSARIO" ? "GLOSSÁRIO" : c;
 
 export function PromptManager({ siteId, siteDomain }: { siteId?: string | null; siteDomain?: string | null }) {
   const [siteStore, setSiteStore] = useLocalStorage<Store>(
